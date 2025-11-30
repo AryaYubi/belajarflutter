@@ -14,7 +14,7 @@ class AppTheme {
   static const Color subtitleColor = Color(0xFF504F5E); // Abu gelap
   static const Color priceColor = Color(0xFF2C96F1); // Biru Harga
   static const Color alertColor = Color(0xFFED6363); // Merah
-  static const Color cardColor = Color(0xFFECEDEF); // Warna background sepatu di card (putih/abu terang)
+  static const Color cardColor = Color(0xFFECEDEF); // Warna background sepatu di card
 }
 
 void main() {
@@ -39,7 +39,6 @@ class ShamoApp extends StatelessWidget {
           titleTextStyle: TextStyle(color: AppTheme.primaryTextColor, fontSize: 18, fontWeight: FontWeight.w500),
           centerTitle: true,
         ),
-         // Menghilangkan efek splash/highlight standar Android/iOS agar lebih mirip desain
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
       ),
@@ -53,7 +52,7 @@ class ShamoApp extends StatelessWidget {
         '/checkout': (context) => const CheckoutPage(),
         '/checkout-success': (context) => const CheckoutSuccessPage(),
         '/edit-profile': (context) => const EditProfilePage(),
-        '/product-detail': (context) => const ProductDetailPage(), // Route Baru
+        '/product-detail': (context) => const ProductDetailPage(),
       },
     );
   }
@@ -239,7 +238,7 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-// --- 5. HOME PAGE ---
+// --- 5. HOME PAGE (UPDATED WITH FILTER LOGIC) ---
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
   @override
@@ -248,14 +247,24 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedCategory = 'All Shoes';
+  
+  // DATA DUMMY DIPERBANYAK AGAR FILTER KELIHATAN EFEKNYA
   final List<Map<String, dynamic>> products = [
     {'name': 'Terrex Urban Low', 'cat': 'Hiking', 'price': 143.98, 'img': 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/a6381273949f4c33b708aae101235e95_9366/Terrex_AX4_Primegreen_Hiking_Shoes_Black_FY9673_01_standard.jpg'},
     {'name': 'Ultra 4D 5 Shoes', 'cat': 'Running', 'price': 285.73, 'img': 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/c20573e88107406e8854af6a01423455_9366/Ultra_4D_Shoes_Black_GX6366_01_standard.jpg'},
     {'name': 'SL 20 Shoes', 'cat': 'Running', 'price': 123.82, 'img': 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/28e3b092323e449c8369aabc00d07412_9366/SL20_Shoes_Black_EG1144_01_standard.jpg'},
+    {'name': 'Dame 7 Shoes', 'cat': 'Basketball', 'price': 125.71, 'img': 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/5e090623126f43708e33ac4c010a3407_9366/Dame_7_Extply_Shoes_Blue_GV9872_01_standard.jpg'},
+    {'name': 'Lego Sport Shoes', 'cat': 'Training', 'price': 92.72, 'img': 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/c690225102a04870bf02ac2e01237c22_9366/adidas_x_LEGO(r)_Sport_Shoes_Red_FY8440_01_standard.jpg'},
+    {'name': 'Predator 20.3 Firm', 'cat': 'Football', 'price': 68.47, 'img': 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/83906a596041492ba262ab9e01168f2d_9366/Predator_Mutator_20.1_Firm_Ground_Boots_Black_EF1629_01_standard.jpg'},
   ];
 
   @override
   Widget build(BuildContext context) {
+    // LOGIKA FILTERING
+    List<Map<String, dynamic>> filteredProducts = selectedCategory == 'All Shoes'
+        ? products
+        : products.where((p) => p['cat'] == selectedCategory).toList();
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -269,6 +278,8 @@ class _HomePageState extends State<HomePage> {
             const CircleAvatar(radius: 27, backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=12')),
           ]),
           const SizedBox(height: 30),
+          
+          // CATEGORY SELECTOR
           SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: ['All Shoes','Running','Training','Basketball','Hiking'].map((e) => 
             Container(
               margin: const EdgeInsets.only(right: 16),
@@ -284,14 +295,35 @@ class _HomePageState extends State<HomePage> {
               ),
             )
           ).toList())),
+          
           const SizedBox(height: 30),
-          const Text("Popular Products", style: TextStyle(color: AppTheme.primaryTextColor, fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 14),
-          SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: products.map((p) => ProductCard(p)).toList())),
-          const SizedBox(height: 30),
-          const Text("New Arrivals", style: TextStyle(color: AppTheme.primaryTextColor, fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 14),
-          Column(children: products.map((p) => ProductTile(p)).toList()),
+
+          // TAMPILAN DINAMIS BERDASARKAN KATEGORI
+          if (selectedCategory == 'All Shoes') ...[
+             // Jika All Shoes, tampilkan Popular (Horizontal) + New Arrivals (Vertical)
+             const Text("Popular Products", style: TextStyle(color: AppTheme.primaryTextColor, fontSize: 22, fontWeight: FontWeight.bold)),
+             const SizedBox(height: 14),
+             SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: products.take(3).map((p) => ProductCard(p)).toList())),
+             
+             const SizedBox(height: 30),
+             const Text("New Arrivals", style: TextStyle(color: AppTheme.primaryTextColor, fontSize: 22, fontWeight: FontWeight.bold)),
+             const SizedBox(height: 14),
+             Column(children: products.map((p) => ProductTile(p)).toList()),
+
+          ] else ...[
+             // Jika memilih kategori tertentu (Running/Training/dll), hanya tampilkan list vertical "For You"
+             const Text("For You", style: TextStyle(color: AppTheme.primaryTextColor, fontSize: 22, fontWeight: FontWeight.bold)),
+             const SizedBox(height: 14),
+             
+             // Check jika kosong
+             filteredProducts.isEmpty 
+              ? const Padding(
+                  padding: EdgeInsets.only(top: 50),
+                  child: Center(child: Text("No items found", style: TextStyle(color: AppTheme.subtitleColor))),
+                )
+              : Column(children: filteredProducts.map((p) => ProductTile(p)).toList()),
+          ],
+
           const SizedBox(height: 80),
         ],
       ),
@@ -736,7 +768,7 @@ class EditProfilePage extends StatelessWidget {
   }
 }
 
-// --- 10. PRODUCT DETAIL PAGE (NEW & FINAL) ---
+// --- 10. PRODUCT DETAIL PAGE ---
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key});
 
@@ -748,14 +780,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   int _currentIndex = 0;
   bool _isWishlist = false;
   
-  // Dummy images for carousel
   final List<String> imgList = [
     'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/a6381273949f4c33b708aae101235e95_9366/Terrex_AX4_Primegreen_Hiking_Shoes_Black_FY9673_01_standard.jpg',
     'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/8a47c907484e42339131aae101236773_9366/Terrex_AX4_Primegreen_Hiking_Shoes_Black_FY9673_02_standard_hover.jpg',
     'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/83972848643246508367aae1012371e5_9366/Terrex_AX4_Primegreen_Hiking_Shoes_Black_FY9673_03_standard.jpg',
   ];
 
-  // Dummy familiar shoes
   final List<String> familiarShoes = [
     'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/c690225102a04870bf02ac2e01237c22_9366/adidas_x_LEGO(r)_Sport_Shoes_Red_FY8440_01_standard.jpg',
     'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/28e3b092323e449c8369aabc00d07412_9366/SL20_Shoes_Black_EG1144_01_standard.jpg',
@@ -766,18 +796,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Menggunakan Stack untuk menumpuk gambar di bawah konten
     return Scaffold(
-      backgroundColor: AppTheme.bgColorTopDetail, // Background terang untuk area gambar
+      backgroundColor: AppTheme.bgColorTopDetail,
       body: Stack(
         children: [
-          // 1. Image Carousel di Layer paling bawah
           _buildImageCarousel(),
-          
-          // 2. Custom AppBar di atas gambar
           _buildCustomAppBar(context),
-
-          // 3. Konten Utama (Draggable/Scrollable Sheet)
           _buildMainContent(),
         ],
       ),
@@ -789,7 +813,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return Column(
       children: [
         SizedBox(
-          height: 350, // Tinggi area gambar
+          height: 350,
           child: PageView.builder(
             itemCount: imgList.length,
             onPageChanged: (index) {
@@ -806,7 +830,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
         ),
         const SizedBox(height: 20),
-        // Indikator titik
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: imgList.asMap().entries.map((entry) {
@@ -828,7 +851,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Widget _buildCustomAppBar(BuildContext context) {
-    // Menggunakan SafeArea hanya untuk bagian atas agar tidak tertutup status bar
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -837,7 +859,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.black), // Icon hitam di background terang
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
               onPressed: () => Navigator.pop(context),
             ),
             IconButton(
@@ -851,18 +873,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Widget _buildMainContent() {
-    // Container dengan margin atas agar menumpuk gambar
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 400),
       decoration: const BoxDecoration(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        color: AppTheme.bgColor1, // Warna background gelap utama
+        color: AppTheme.bgColor1, 
       ),
       child: ListView(
         padding: const EdgeInsets.all(30),
         children: [
-          // Header Title & Wishlist Button
           Row(
             children: [
               Expanded(
@@ -899,8 +919,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ],
           ),
           const SizedBox(height: 20),
-
-          // Price Banner
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: AppTheme.bgColor2, borderRadius: BorderRadius.circular(4)),
@@ -913,14 +931,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
           const SizedBox(height: 30),
-
-          // Description
           const Text("Description", style: TextStyle(color: AppTheme.primaryTextColor, fontWeight: FontWeight.w500)),
           const SizedBox(height: 12),
           const Text("Unpaved trails and mixed surfaces are easy when you have the traction and support you need. Casual enough for the daily commute.", style: TextStyle(color: AppTheme.secondaryTextColor, fontWeight: FontWeight.w300), textAlign: TextAlign.justify),
           const SizedBox(height: 30),
-
-          // Familiar Shoes
           const Text("Fimiliar Shoes", style: TextStyle(color: AppTheme.primaryTextColor, fontWeight: FontWeight.w500)),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -931,7 +945,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   width: 54, height: 54,
                   margin: const EdgeInsets.only(right: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white, // Background putih untuk gambar kecil
+                    color: Colors.white, 
                     borderRadius: BorderRadius.circular(6),
                     image: DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
                   ),
@@ -951,7 +965,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
       child: Row(
         children: [
-          // Chat Button (Outlined)
           Container(
             width: 54, height: 54,
             decoration: BoxDecoration(
@@ -964,7 +977,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
           const SizedBox(width: 16),
-          // Add to Cart Button (Filled)
           Expanded(
             child: SizedBox(
               height: 54,
@@ -985,7 +997,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  // Fungsi untuk memunculkan Dialog Sukses
   Future<void> showSuccessDialog() async {
     return showDialog(
       context: context,
@@ -1022,7 +1033,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 }
 
-// --- 11. REUSABLE WIDGETS (Updated with Navigation to Detail) ---
+// --- 11. REUSABLE WIDGETS ---
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> data;
   const ProductCard(this.data, {super.key});
@@ -1053,7 +1064,6 @@ class ProductTile extends StatelessWidget {
   }
 }
 
-// (CustomInput dan CustomButton tetap sama, tidak perlu diubah)
 class CustomInput extends StatelessWidget {
   final String label; final IconData icon; final String hint; final bool isPassword;
   const CustomInput({super.key, required this.label, required this.icon, required this.hint, this.isPassword = false});
