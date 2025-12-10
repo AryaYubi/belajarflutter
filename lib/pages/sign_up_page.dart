@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/custom_button.dart';
 
-class SignInPage extends StatelessWidget {
-  const SignInPage({super.key});
+class SignUpPage extends StatelessWidget {
+  const SignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +13,9 @@ class SignInPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Login', style: primaryTextStyle.copyWith(fontSize: 24, fontWeight: semiBold)),
+            Text('Sign Up', style: primaryTextStyle.copyWith(fontSize: 24, fontWeight: semiBold)),
             const SizedBox(height: 2),
-            Text('Sign In to Continue', style: subtitleTextStyle),
+            Text('Register and Happy Shoping', style: subtitleTextStyle),
           ],
         ),
       );
@@ -64,21 +64,22 @@ class SignInPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               header(),
-              SizedBox(height: 50),
+              inputField('Full Name', 'assets/icon_name.png', 'Your Full Name'),
+              inputField('Username', 'assets/icon_username.png', 'Your Username'),
               inputField('Email Address', 'assets/icon_email.png', 'Your Email Address'),
               inputField('Password', 'assets/icon_password.png', 'Your Password', isObscure: true),
               const SizedBox(height: 30),
-              CustomButton(text: 'Sign In', onPressed: () => Navigator.pushNamed(context, '/home')),
+              CustomButton(text: 'Sign Up', onPressed: () => Navigator.pushNamed(context, '/home')),
               const Spacer(),
               Container(
                 margin: const EdgeInsets.only(bottom: 30),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Don\'t have an account? ', style: subtitleTextStyle.copyWith(fontSize: 12)),
+                    Text('Already have an account? ', style: subtitleTextStyle.copyWith(fontSize: 12)),
                     GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/sign-up'),
-                      child: Text('Sign Up', style: purpleTextStyle.copyWith(fontSize: 12, fontWeight: medium)),
+                      onTap: () => Navigator.pop(context),
+                      child: Text('Sign In', style: purpleTextStyle.copyWith(fontSize: 12, fontWeight: medium)),
                     ),
                   ],
                 ),
