@@ -1,41 +1,48 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:shamo/pages/cart_page.dart';
-import 'package:shamo/pages/checkout_page.dart';
-import 'package:shamo/pages/checkout_success_page.dart';
-import 'package:shamo/pages/detail_chat_page.dart';
-import 'package:shamo/pages/edit_profile_page.dart';
-import 'package:shamo/pages/home/main_page.dart';
-import 'package:shamo/pages/product_page.dart';
-import 'package:shamo/pages/sign_in_page.dart';
-import 'package:shamo/pages/sign_up_page.dart';
-import 'package:shamo/pages/splash_page.dart';
-import 'package:shamo/theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() => runApp(const MyApp());
+
+import 'theme.dart';
+import 'pages/splash_page.dart';
+import 'pages/sign_in_page.dart';
+import 'pages/sign_up_page.dart';
+import 'pages/home/main_page.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // ================================
+  // INITIALIZE SUPABASE (PAKAI DATA KAMU)
+  // ================================
+  await Supabase.initialize(
+    url: 'https://qsgngjurpkxbymhzywzv.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzZ25nanVycGt4YnltaHp5d3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzODI0NzMsImV4cCI6MjA4MDk1ODQ3M30.fQ4fSsVaXLF4H-hIYNwfaHt4yfTzET1SJPWl5sUu64E',
+  );
+
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Poppins',
-        scaffoldBackgroundColor: bg1Color,
-      ),
+
+      // Jika user sudah login → langsung ke HOME
+      // Jika tidak → ke SIGN IN
+      initialRoute: session != null ? '/home' : '/sign-in',
+
       routes: {
-        '/': (context) => const SplashPage(),
+        '/splash': (context) => const SplashPage(),
         '/sign-in': (context) => const SignInPage(),
         '/sign-up': (context) => const SignUpPage(),
         '/home': (context) => const MainPage(),
-        '/detail-chat': (context) => const DetailChatPage(),
-        '/product': (context) => const ProductPage(),
-        '/cart': (context) => const CartPage(),
-        '/checkout': (context) => const CheckoutPage(),
-        '/checkout-success': (context) => const CheckoutSuccessPage(),
-        '/edit-profile': (context) => const EditProfilePage(),
       },
     );
   }

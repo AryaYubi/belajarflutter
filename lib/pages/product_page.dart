@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shamo/widgets/custom_button.dart';
+import 'package:shamo/services/cart_service.dart';
+
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
@@ -12,14 +15,29 @@ class ProductPage extends StatefulWidget {
 class _ProductPageState extends State<ProductPage> {
   int currentIndex = 0;
   bool isWishlist = false;
-  final List<String> images = [
-    'assets/image_shoes.png',
-    'assets/image_shoes.png',
-    'assets/image_shoes.png',
-  ];
 
   @override
   Widget build(BuildContext context) {
+    // ======================================================
+    // RECEIVE PRODUCT DATA FROM HOMEPAGE
+    // ======================================================
+    final Map<String, dynamic> product =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+
+    // Supabase fields
+    final String name = product['name'] ?? '';
+    final String category = product['category'] ?? '';
+    final String description = product['description'] ?? 'No description provided.';
+    final dynamic price = product['price'] ?? 0;
+    final String imageUrl = product['image_url'] ?? '';
+
+    // Images carousel → Supabase only gives 1 image, so we duplicate for smooth UI
+    final List<String> images = [
+      imageUrl,
+      imageUrl,
+      imageUrl,
+    ];
+
     Future<void> showSuccessDialog() async {
       return showDialog(
         context: context,
@@ -30,14 +48,25 @@ class _ProductPageState extends State<ProductPage> {
             content: SingleChildScrollView(
               child: Column(
                 children: [
-                  Align(alignment: Alignment.centerLeft, child: GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.close, color: primaryTextColor))),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(Icons.close, color: primaryTextColor),
+                    ),
+                  ),
                   Image.asset('assets/icon_success.png', width: 100),
                   const SizedBox(height: 12),
-                  Text('Hurray :)', style: primaryTextStyle.copyWith(fontSize: 18, fontWeight: semiBold)),
+                  Text('Hurray :)',
+                      style: primaryTextStyle.copyWith(
+                          fontSize: 18, fontWeight: semiBold)),
                   const SizedBox(height: 12),
                   Text('Item added successfully', style: secondaryTextStyle),
                   const SizedBox(height: 20),
-                  CustomButton(text: 'View My Cart', onPressed: () => Navigator.pushNamed(context, '/cart'), width: 154),
+                  CustomButton(
+                      text: 'View My Cart',
+                      onPressed: () => Navigator.pushNamed(context, '/cart'),
+                      width: 154),
                 ],
               ),
             ),
@@ -62,14 +91,21 @@ class _ProductPageState extends State<ProductPage> {
       backgroundColor: const Color(0xffECEDEF),
       body: ListView(
         children: [
+          // ======================================================
+          // IMAGE CAROUSEL
+          // ======================================================
           Stack(
             children: [
               SizedBox(
-                height: 350, // Image Carousel area
+                height: 350,
                 child: PageView.builder(
-                   itemCount: images.length,
-                   onPageChanged: (index) => setState(() => currentIndex = index),
-                   itemBuilder: (context, index) => Image.asset(images[index], fit: BoxFit.cover),
+                  itemCount: images.length,
+                  onPageChanged: (index) => setState(() => currentIndex = index),
+                  itemBuilder: (context, index) => Image.network(
+                    images[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset('assets/image_shoes.png', fit: BoxFit.cover),
+                  ),
                 ),
               ),
               Container(
@@ -77,17 +113,30 @@ class _ProductPageState extends State<ProductPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.chevron_left)),
-                    const Icon(Icons.shopping_bag, color: Colors.black),
+                    GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.chevron_left, size: 32)),
+                    const Icon(Icons.shopping_bag, color: Colors.black, size: 28),
                   ],
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 10),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: images.asMap().entries.map((entry) => indicator(entry.key)).toList()),
-          
-          // Content
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: images
+                .asMap()
+                .entries
+                .map((entry) => indicator(entry.key))
+                .toList(),
+          ),
+
+          // ======================================================
+          // PRODUCT INFO CONTENT
+          // ======================================================
           Container(
             width: double.infinity,
             margin: const EdgeInsets.only(top: 17),
@@ -99,43 +148,97 @@ class _ProductPageState extends State<ProductPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // NAME, CATEGORY, WISHLIST
                 Row(
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('TERREX URBAN LOW', style: primaryTextStyle.copyWith(fontSize: 18, fontWeight: semiBold)),
-                          Text('Hiking', style: secondaryTextStyle.copyWith(fontSize: 12)),
+                          Text(name,
+                              style: primaryTextStyle.copyWith(
+                                  fontSize: 18, fontWeight: semiBold)),
+                          Text(category,
+                              style: secondaryTextStyle.copyWith(fontSize: 12)),
                         ],
                       ),
                     ),
                     GestureDetector(
                       onTap: () => setState(() => isWishlist = !isWishlist),
-                      child: Image.asset(isWishlist ? 'assets/button_wishlist_blue.png' : 'assets/button_wishlist.png', width: 46),
+                      child: Image.asset(
+                        isWishlist
+                            ? 'assets/button_wishlist_blue.png'
+                            : 'assets/button_wishlist.png',
+                        width: 46,
+                      ),
                     ),
                   ],
                 ),
-                // Price & Description ...
+
                 const SizedBox(height: 20),
-                Text('Description', style: primaryTextStyle.copyWith(fontWeight: medium)),
+
+                // PRICE BOX
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: bg2Color,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Text('Price starts from',
+                          style: secondaryTextStyle.copyWith(fontSize: 12)),
+                      const SizedBox(width: 6),
+                      Text('\$$price',
+                          style: priceTextStyle.copyWith(
+                              fontSize: 16, fontWeight: semiBold)),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // DESCRIPTION
+                Text('Description',
+                    style:
+                        primaryTextStyle.copyWith(fontWeight: medium)),
                 const SizedBox(height: 12),
-                Text('Unpaved trails and mixed surfaces are easy when you have the traction and support you need.', style: secondaryTextStyle.copyWith(fontWeight: light), textAlign: TextAlign.justify),
+                Text(description,
+                    style:
+                        secondaryTextStyle.copyWith(fontWeight: light),
+                    textAlign: TextAlign.justify),
+
                 const SizedBox(height: 30),
-                // Buttons
+
+                // CHAT + ADD TO CART
                 Row(
                   children: [
                     Container(
-                      width: 54, height: 54,
-                      decoration: BoxDecoration(border: Border.all(color: primaryColor), borderRadius: BorderRadius.circular(12)),
-                      child: GestureDetector(onTap: () => Navigator.pushNamed(context, '/detail-chat'), child: Icon(Icons.chat, color: primaryColor)),
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: primaryColor),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: GestureDetector(
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/detail-chat'),
+                        child:
+                            Icon(Icons.chat, color: primaryColor, size: 28),
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: CustomButton(text: 'Add to Cart', onPressed: showSuccessDialog),
+                      child: CustomButton(
+                        text: 'Add to Cart',
+                        onPressed: () async {
+  await cartService.addToCart(product['id']);
+  showSuccessDialog();
+}
+                      ),
                     ),
                   ],
-                ),
+                )
               ],
             ),
           ),
