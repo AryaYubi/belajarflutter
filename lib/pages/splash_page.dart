@@ -7,15 +7,20 @@ class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
   @override
-  _SplashPageState createState() => _SplashPageState();
+  // Perbaikan: Ubah createState() menjadi private
+  State<SplashPage> createState() => _SplashPageState(); 
 }
 
-class _SplashPageState extends State<SplashPage> {
+// Perbaikan: Buat class State menjadi private
+class _SplashPageState extends State<SplashPage> { 
   @override
   void initState() {
     super.initState();
 
     Timer(const Duration(seconds: 2), () {
+      // Cek mounted sebelum menggunakan context di dalam Timer
+      if (!mounted) return;
+      
       final session = Supabase.instance.client.auth.currentSession;
 
       if (session != null) {

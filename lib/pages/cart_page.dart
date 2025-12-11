@@ -1,8 +1,9 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/cart_card.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shamo/services/supabase_service.dart';
+
+// [IMPORTS TIDAK DIGUNAKAN DIHAPUS]
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -12,6 +13,7 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  // ASUMSI: Supabase sudah diinisialisasi di main.dart
   final supabase = Supabase.instance.client;
 
   bool isLoading = true;
@@ -26,6 +28,7 @@ class _CartPageState extends State<CartPage> {
 
   // Fetch data cart dari Supabase
   Future<void> fetchCart() async {
+    // PENTING: Tambahkan pengecekan mounted sebelum setState
     final userId = supabase.auth.currentUser!.id;
 
     final res = await supabase
@@ -43,6 +46,8 @@ class _CartPageState extends State<CartPage> {
       final qty = item['quantity'] ?? 1;
       total += price * qty;
     }
+
+    if (!mounted) return; // Pengecekan stabilitas async
 
     setState(() {
       cartItems = items;
@@ -67,23 +72,23 @@ class _CartPageState extends State<CartPage> {
 
       // BODY
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : cartItems.isEmpty
-              ? Center(
-                  child: Text("Your cart is empty",
-                      style: primaryTextStyle.copyWith(fontSize: 16)),
-                )
-              : ListView(
-                  padding: EdgeInsets.symmetric(horizontal: defaultMargin),
-                  children: cartItems
-                      .map((item) => CartCard(
-                            cartId: item['id'],
-                            product: item['products'],
-                            quantity: item['quantity'],
-                            onUpdate: fetchCart,
-                          ))
-                      .toList(),
-                ),
+              ? const Center(child: CircularProgressIndicator())
+              : cartItems.isEmpty
+                  ? Center(
+                      child: Text("Your cart is empty",
+                          style: primaryTextStyle.copyWith(fontSize: 16)),
+                    )
+                  : ListView(
+                      padding: EdgeInsets.symmetric(horizontal: defaultMargin),
+                      children: cartItems
+                          .map((item) => CartCard(
+                                cartId: item['id'],
+                                product: item['products'],
+                                quantity: item['quantity'],
+                                onUpdate: fetchCart,
+                              ))
+                          .toList(),
+                    ),
 
       // FOOTER BAR
       bottomNavigationBar: SizedBox(

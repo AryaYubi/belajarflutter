@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/custom_button.dart';
+import 'dart:developer'; // Import untuk debugPrint
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -30,6 +31,9 @@ class _SignUpPageState extends State<SignUpPage> {
         password: passwordController.text.trim(),
       );
 
+      // PENTING: Cek mounted sebelum menggunakan context setelah await
+      if (!mounted) return; 
+      
       final user = response.user;
 
       if (user == null) {
@@ -38,18 +42,25 @@ class _SignUpPageState extends State<SignUpPage> {
 
       // 2️⃣ Insert ke tabel user_profiles
       await supabase.from('profiles').insert({
-  'id': user.id,
-  'name': fullNameController.text.trim(),
-  'username': usernameController.text.trim(),
-  'avatar_url': null,
-});
+        'id': user.id,
+        'name': fullNameController.text.trim(),
+        'username': usernameController.text.trim(),
+        'avatar_url': null,
+      });
+
+      // PENTING: Cek mounted sebelum menggunakan context lagi
+      if (!mounted) return;
 
       // 3️⃣ Redirect ke Home
       Navigator.pushReplacementNamed(context, '/home');
 
     } catch (e) {
-      print("❌ ERROR SIGN UP: $e");
+      // Mengganti print dengan debugPrint
+      log("❌ ERROR SIGN UP: $e"); 
 
+      // PENTING: Cek mounted sebelum menggunakan context
+      if (!mounted) return; 
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Sign Up gagal: $e")),
       );

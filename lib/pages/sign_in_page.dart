@@ -26,6 +26,10 @@ class _SignInPageState extends State<SignInPage> {
     // VALIDASI INPUT
     if (emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty) {
+      
+      // PENTING: Pengecekan mounted sebelum menggunakan context
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Colors.red,
@@ -42,16 +46,20 @@ class _SignInPageState extends State<SignInPage> {
         password: passwordController.text.trim(),
       );
 
+      // PENTING: Pengecekan mounted setelah await
+      if (!mounted) return; 
+
       if (response.session == null) {
         throw Exception("Email atau password salah");
       }
 
-      // Redirect via SPLASH (agar load profile + session benar)
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/splash');
-      }
+      // Redirect via SPLASH (sudah ada pengecekan 'mounted' di sini)
+      Navigator.pushReplacementNamed(context, '/splash');
 
     } catch (e) {
+      // PENTING: Pengecekan mounted sebelum menggunakan context di catch block
+      if (!mounted) return; 
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red,
@@ -60,6 +68,9 @@ class _SignInPageState extends State<SignInPage> {
       );
     }
 
+    // PENTING: Pengecekan mounted sebelum setState akhir
+    if (!mounted) return; 
+    
     setState(() => isLoading = false);
   }
 

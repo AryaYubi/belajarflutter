@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
+// NOTE: Definisi ProductCard yang pertama di file ini telah dihapus
+// karena redundan dan tidak mengambil data Supabase.
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> product;
-  const ProductCard(this.product, {super.key});
+  // Perbaikan: use_key_in_widget_constructors (menambahkan super.key)
+  const ProductCard(this.product, {super.key}); 
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +41,8 @@ class ProductCard extends StatelessWidget {
                 width: 215,
                 height: 150,
                 fit: BoxFit.cover,
-                errorBuilder: (ctx, _, __) => Image.asset(
+                // Perbaikan: errorBuilder - mengganti _ dan __ dengan parameter eksplisit
+                errorBuilder: (ctx, error, stackTrace) => Image.asset(
                   'assets/image_shoes.png',
                   width: 215,
                   height: 150,

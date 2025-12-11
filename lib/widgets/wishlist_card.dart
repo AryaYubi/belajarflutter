@@ -23,7 +23,8 @@ class WishlistCard extends StatelessWidget {
               width: 60,
               height: 60,
               fit: BoxFit.cover,
-              errorBuilder: (ctx, _, __) => Image.asset('assets/image_shoes.png', width: 60, height: 60, fit: BoxFit.cover),
+              // Perbaikan: Mengganti __ menjadi _
+              errorBuilder: (ctx, error, stackTrace) => Image.asset('assets/image_shoes.png', width: 60, height: 60, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(width: 12),

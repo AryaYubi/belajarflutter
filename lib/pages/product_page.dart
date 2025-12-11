@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+// import 'package:supabase_flutter/supabase_flutter.dart'; // [UNUSED IMPORT DIHAPUS]
 import 'package:shamo/widgets/custom_button.dart';
 import 'package:shamo/services/cart_service.dart';
 
@@ -101,10 +101,13 @@ class _ProductPageState extends State<ProductPage> {
                 child: PageView.builder(
                   itemCount: images.length,
                   onPageChanged: (index) => setState(() => currentIndex = index),
+                  // PENTING: Struktur PageView.builder yang Benar
                   itemBuilder: (context, index) => Image.network(
                     images[index],
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset('assets/image_shoes.png', fit: BoxFit.cover),
+                    // Perbaikan errorBuilder: Mengganti __ dan ___ dengan _ yang jelas
+                    errorBuilder: (context, error, stackTrace) => 
+                        Image.asset('assets/image_shoes.png', fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -159,7 +162,8 @@ class _ProductPageState extends State<ProductPage> {
                               style: primaryTextStyle.copyWith(
                                   fontSize: 18, fontWeight: semiBold)),
                           Text(category,
-                              style: secondaryTextStyle.copyWith(fontSize: 12)),
+                              style:
+                                  secondaryTextStyle.copyWith(fontSize: 12)),
                         ],
                       ),
                     ),
@@ -204,8 +208,7 @@ class _ProductPageState extends State<ProductPage> {
                         primaryTextStyle.copyWith(fontWeight: medium)),
                 const SizedBox(height: 12),
                 Text(description,
-                    style:
-                        secondaryTextStyle.copyWith(fontWeight: light),
+                    style: secondaryTextStyle.copyWith(fontWeight: light),
                     textAlign: TextAlign.justify),
 
                 const SizedBox(height: 30),
@@ -232,9 +235,10 @@ class _ProductPageState extends State<ProductPage> {
                       child: CustomButton(
                         text: 'Add to Cart',
                         onPressed: () async {
-  await cartService.addToCart(product['id']);
-  showSuccessDialog();
-}
+                          // PENTING: Tambahkan pengecekan mounted sebelum showSuccessDialog jika diperlukan
+                          await cartService.addToCart(product['id']);
+                          showSuccessDialog();
+                        },
                       ),
                     ),
                   ],

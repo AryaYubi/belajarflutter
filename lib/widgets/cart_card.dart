@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shamo/services/supabase_service.dart';
+// import 'package:shamo/services/supabase_service.dart'; // [DIHAPUS]
 
 class CartCard extends StatelessWidget {
   final int cartId;

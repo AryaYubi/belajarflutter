@@ -24,9 +24,7 @@ class ProductTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ======================================================
             // IMAGE
-            // ======================================================
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Image.network(
@@ -34,7 +32,8 @@ class ProductTile extends StatelessWidget {
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
-                errorBuilder: (ctx, _, __) => Image.asset(
+                // Perbaikan: Mengganti __ menjadi _
+                errorBuilder: (ctx, error, stackTrace) => Image.asset(
                   'assets/image_shoes.png',
                   width: 120,
                   height: 120,
@@ -45,9 +44,7 @@ class ProductTile extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // ======================================================
             // PRODUCT INFO
-            // ======================================================
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

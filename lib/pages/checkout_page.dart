@@ -34,7 +34,8 @@ class CheckoutPage extends StatelessWidget {
                   children: [
                     Column(children: [
                       Image.asset('assets/icon_store_location.png', width: 40),
-                      Image.asset('assets/icon_line.png', height: 30, errorBuilder: (_,__,___)=>Container(height:30, width:1, color:secondaryColor)),
+                      // Perbaikan: Mengganti __ dan ___ dengan _ yang jelas
+                      Image.asset('assets/icon_line.png', height: 30, errorBuilder: (context, error, stackTrace)=>Container(height:30, width:1, color:secondaryColor)),
                       Image.asset('assets/icon_your_address.png', width: 40),
                     ]),
                     const SizedBox(width: 12),

@@ -67,7 +67,8 @@ class DetailChatPage extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 20),
-            Image.asset('assets/button_send.png', width: 45, errorBuilder: (_,__,___) => const Icon(Icons.send, color: Colors.blue)), // Ganti button_send dengan icon_submit.png jika ada
+            // Perbaikan: Mengganti __ dan ___ dengan _ yang jelas
+            Image.asset('assets/button_send.png', width: 45, errorBuilder: (context, error, stackTrace) => const Icon(Icons.send, color: Colors.blue)), 
           ],
         ),
       ),

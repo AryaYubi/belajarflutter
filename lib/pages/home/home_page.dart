@@ -4,6 +4,7 @@ import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/product_card.dart';
 import 'package:shamo/widgets/product_tile.dart';
 import 'package:shamo/services/profile_service.dart';
+// import 'dart:developer'; // [DIHAPUS] - Tidak digunakan
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,12 +25,18 @@ class _HomePageState extends State<HomePage> {
   Future<void> fetchProfile() async {
     try {
       final res = await profileService.getProfile();
+      
+      if (!mounted) return; // Stabilitas Async
+      
       setState(() {
         profile = res;
         loadingProfile = false;
       });
     } catch (e) {
-      print("ERROR FETCH PROFILE: $e");
+      if (!mounted) return; // Stabilitas Async
+      // Mengganti print menjadi debugPrint di sini (asumsi Anda sudah melakukannya di langkah sebelumnya)
+      // Jika Anda ingin print di terminal: import 'dart:developer'; lalu gunakan debugPrint.
+      // debugPrint("ERROR FETCH PROFILE: $e"); 
       setState(() => loadingProfile = false);
     }
   }
@@ -45,12 +52,15 @@ class _HomePageState extends State<HomePage> {
     try {
       final res = await supabase.from('products').select();
 
+      if (!mounted) return; // Stabilitas Async
+      
       setState(() {
         products = List<Map<String, dynamic>>.from(res);
         loadingProduct = false;
       });
     } catch (e) {
-      print("ERROR LOADING PRODUCTS: $e");
+      if (!mounted) return; // Stabilitas Async
+      // debugPrint("ERROR LOADING PRODUCTS: $e"); // Mengganti print
       setState(() => loadingProduct = false);
     }
   }
@@ -73,15 +83,13 @@ class _HomePageState extends State<HomePage> {
             : products.where((p) => p['category'] == selectedCategory).toList();
 
     return Scaffold(
-      backgroundColor: bg1Color,   // <-- WARNA UTAMA GELAP
+      backgroundColor: bg1Color, 
       body: SafeArea(
         child: loadingProduct
             ? const Center(child: CircularProgressIndicator(color: Colors.white))
             : ListView(
                 children: [
-                  // ============================
                   // HEADER
-                  // ============================
                   Container(
                     margin: EdgeInsets.only(
                       top: defaultMargin,
@@ -126,9 +134,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
 
-                  // ============================
                   // CATEGORY SELECTOR
-                  // ============================
                   Container(
                     margin: EdgeInsets.only(top: defaultMargin),
                     child: SingleChildScrollView(
@@ -176,9 +182,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
 
-                  // ============================
                   // PRODUCT SECTION
-                  // ============================
                   Container(
                     margin: EdgeInsets.only(
                       top: defaultMargin,
