@@ -1,3 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final SupabaseClient supabase = Supabase.instance.client;
+// Deklarasi client Supabase yang akan digunakan di seluruh aplikasi
+final SupabaseClient supabaseClient = Supabase.instance.client;

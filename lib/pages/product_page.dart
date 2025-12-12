@@ -14,9 +14,13 @@ class ProductPage extends StatefulWidget {
 class _ProductPageState extends State<ProductPage> {
   int currentIndex = 0;
   bool isWishlist = false;
+  int currentQuantity = 1;
 
   final supabase = Supabase.instance.client;
 
+  // ───────────────────────────────────────────────
+  // LOAD WISHLIST STATUS FROM SUPABASE
+  // ───────────────────────────────────────────────
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -35,9 +39,12 @@ class _ProductPageState extends State<ProductPage> {
         .eq('user_id', user.id)
         .eq('product_id', product['id']);
 
-    setState(() => isWishlist = data.isNotEmpty);
+    if (mounted) setState(() => isWishlist = data.isNotEmpty);
   }
 
+  // ───────────────────────────────────────────────
+  // TOGGLE WISHLIST
+  // ───────────────────────────────────────────────
   Future<void> _toggleWishlist() async {
     final product =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
@@ -45,21 +52,92 @@ class _ProductPageState extends State<ProductPage> {
     if (user == null) return;
 
     if (isWishlist) {
-      // Remove from wishlist
       await supabase
           .from('wishlists')
           .delete()
           .eq('user_id', user.id)
           .eq('product_id', product['id']);
-      setState(() => isWishlist = false);
+
+      if (mounted) setState(() => isWishlist = false);
     } else {
-      // Add to wishlist
       await supabase.from('wishlists').insert({
         'user_id': user.id,
         'product_id': product['id'],
       });
-      setState(() => isWishlist = true);
+
+      if (mounted) setState(() => isWishlist = true);
     }
+  }
+
+  // ───────────────────────────────────────────────
+  // ADD TO CART (MERGED FROM VERSION 1)
+  // ───────────────────────────────────────────────
+  Future<void> handleAddToCart(int productId) async {
+    try {
+      await cartService.addToCart(productId, qty: currentQuantity);
+
+      if (mounted) showSuccessDialog();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: alertColor,
+          content:
+              const Text("Failed to add to cart. Make sure you are logged in."),
+        ),
+      );
+    }
+  }
+
+  Future<void> showSuccessDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: bg3Color,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(Icons.close, color: primaryTextColor),
+                  ),
+                ),
+                Image.asset('assets/icon_success.png', width: 100),
+                const SizedBox(height: 12),
+                Text('Hurray :)',
+                    style: primaryTextStyle.copyWith(
+                        fontSize: 18, fontWeight: semiBold)),
+                const SizedBox(height: 12),
+                Text('Item added successfully', style: secondaryTextStyle),
+                const SizedBox(height: 20),
+                CustomButton(
+                    text: 'View My Cart',
+                    onPressed: () => Navigator.pushNamed(context, '/cart'),
+                    width: 154),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Indicator for image slider
+  Widget indicator(int index) {
+    return Container(
+      width: currentIndex == index ? 16 : 4,
+      height: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: currentIndex == index ? primaryColor : const Color(0xffC4C4C4),
+      ),
+    );
   }
 
   @override
@@ -67,69 +145,24 @@ class _ProductPageState extends State<ProductPage> {
     final product =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
+    final int productId = product['id'];
     final String name = product['name'] ?? '';
     final String category = product['category'] ?? '';
     final String description =
         product['description'] ?? 'No description provided.';
     final dynamic price = product['price'] ?? 0;
+    final String priceString = price.toStringAsFixed(2);
     final String imageUrl = product['image_url'] ?? '';
 
     final List<String> images = [imageUrl, imageUrl, imageUrl];
-
-    Future<void> showSuccessDialog() async {
-      return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: bg3Color,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            content: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Icon(Icons.close, color: primaryTextColor),
-                    ),
-                  ),
-                  Image.asset('assets/icon_success.png', width: 100),
-                  const SizedBox(height: 12),
-                  Text('Hurray :)',
-                      style: primaryTextStyle.copyWith(
-                          fontSize: 18, fontWeight: semiBold)),
-                  const SizedBox(height: 12),
-                  Text('Item added successfully', style: secondaryTextStyle),
-                  const SizedBox(height: 20),
-                  CustomButton(
-                      text: 'View My Cart',
-                      onPressed: () => Navigator.pushNamed(context, '/cart'),
-                      width: 154),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-    Widget indicator(int index) {
-      return Container(
-        width: currentIndex == index ? 16 : 4,
-        height: 4,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: currentIndex == index ? primaryColor : const Color(0xffC4C4C4),
-        ),
-      );
-    }
 
     return Scaffold(
       backgroundColor: const Color(0xffECEDEF),
       body: ListView(
         children: [
+          // ───────────────────────────────────────────────
+          // PRODUCT IMAGES
+          // ───────────────────────────────────────────────
           Stack(
             children: [
               SizedBox(
@@ -140,8 +173,9 @@ class _ProductPageState extends State<ProductPage> {
                   itemBuilder: (context, index) => Image.network(
                     images[index],
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        Image.asset('assets/image_shoes.png', fit: BoxFit.cover),
+                    errorBuilder: (_, __, ___) =>
+                        Image.asset('assets/image_shoes.png',
+                            fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -153,7 +187,8 @@ class _ProductPageState extends State<ProductPage> {
                     GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: const Icon(Icons.chevron_left, size: 32)),
-                    const Icon(Icons.shopping_bag, color: Colors.black, size: 28),
+                    const Icon(Icons.shopping_bag,
+                        color: Colors.black, size: 28),
                   ],
                 ),
               ),
@@ -162,15 +197,16 @@ class _ProductPageState extends State<ProductPage> {
 
           const SizedBox(height: 10),
 
+          // indicator dots
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: images
-                .asMap()
-                .entries
-                .map((entry) => indicator(entry.key))
-                .toList(),
+            children:
+                images.asMap().entries.map((e) => indicator(e.key)).toList(),
           ),
 
+          // ───────────────────────────────────────────────
+          // PRODUCT DETAILS
+          // ───────────────────────────────────────────────
           Container(
             width: double.infinity,
             margin: const EdgeInsets.only(top: 17),
@@ -182,7 +218,7 @@ class _ProductPageState extends State<ProductPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // NAME, CATEGORY, WISHLIST
+                // NAME + CATEGORY + WISHLIST BUTTON
                 Row(
                   children: [
                     Expanded(
@@ -212,6 +248,7 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 20),
 
+                // PRICE BOX
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -223,7 +260,7 @@ class _ProductPageState extends State<ProductPage> {
                       Text('Price starts from',
                           style: secondaryTextStyle.copyWith(fontSize: 12)),
                       const SizedBox(width: 6),
-                      Text('\$$price',
+                      Text('\$$priceString',
                           style: priceTextStyle.copyWith(
                               fontSize: 16, fontWeight: semiBold)),
                     ],
@@ -232,6 +269,43 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 20),
 
+                // ───────────────────────────────────────────────
+                // QUANTITY CONTROL
+                // ───────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Quantity',
+                        style: primaryTextStyle.copyWith(fontWeight: medium)),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: currentQuantity > 1
+                              ? () => setState(() => currentQuantity--)
+                              : null,
+                          child: Icon(Icons.remove_circle_outline,
+                              color: currentQuantity > 1
+                                  ? primaryColor
+                                  : secondaryTextColor),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(currentQuantity.toString(),
+                            style: primaryTextStyle.copyWith(
+                                fontSize: 16, fontWeight: medium)),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () => setState(() => currentQuantity++),
+                          child: Icon(Icons.add_circle_outline,
+                              color: primaryColor),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // DESCRIPTION
                 Text('Description',
                     style: primaryTextStyle.copyWith(fontWeight: medium)),
                 const SizedBox(height: 12),
@@ -241,6 +315,7 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 30),
 
+                // CHAT + ADD TO CART
                 Row(
                   children: [
                     Container(
@@ -253,18 +328,15 @@ class _ProductPageState extends State<ProductPage> {
                       child: GestureDetector(
                         onTap: () =>
                             Navigator.pushNamed(context, '/detail-chat'),
-                        child:
-                            Icon(Icons.chat, color: primaryColor, size: 28),
+                        child: Icon(Icons.chat,
+                            color: primaryColor, size: 28),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: CustomButton(
                         text: 'Add to Cart',
-                        onPressed: () async {
-                          await cartService.addToCart(product['id']);
-                          showSuccessDialog();
-                        },
+                        onPressed: () => handleAddToCart(productId),
                       ),
                     ),
                   ],
