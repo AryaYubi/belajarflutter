@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart'; // [UNUSED IMPORT DIHAPUS]
 import 'package:shamo/widgets/custom_button.dart';
 import 'package:shamo/services/cart_service.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
@@ -16,27 +15,66 @@ class _ProductPageState extends State<ProductPage> {
   int currentIndex = 0;
   bool isWishlist = false;
 
+  final supabase = Supabase.instance.client;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkIfWishlist();
+  }
+
+  Future<void> _checkIfWishlist() async {
+    final product =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    final List data = await supabase
+        .from('wishlists')
+        .select()
+        .eq('user_id', user.id)
+        .eq('product_id', product['id']);
+
+    setState(() => isWishlist = data.isNotEmpty);
+  }
+
+  Future<void> _toggleWishlist() async {
+    final product =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    if (isWishlist) {
+      // Remove from wishlist
+      await supabase
+          .from('wishlists')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', product['id']);
+      setState(() => isWishlist = false);
+    } else {
+      // Add to wishlist
+      await supabase.from('wishlists').insert({
+        'user_id': user.id,
+        'product_id': product['id'],
+      });
+      setState(() => isWishlist = true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ======================================================
-    // RECEIVE PRODUCT DATA FROM HOMEPAGE
-    // ======================================================
-    final Map<String, dynamic> product =
+    final product =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
-    // Supabase fields
     final String name = product['name'] ?? '';
     final String category = product['category'] ?? '';
-    final String description = product['description'] ?? 'No description provided.';
+    final String description =
+        product['description'] ?? 'No description provided.';
     final dynamic price = product['price'] ?? 0;
     final String imageUrl = product['image_url'] ?? '';
 
-    // Images carousel → Supabase only gives 1 image, so we duplicate for smooth UI
-    final List<String> images = [
-      imageUrl,
-      imageUrl,
-      imageUrl,
-    ];
+    final List<String> images = [imageUrl, imageUrl, imageUrl];
 
     Future<void> showSuccessDialog() async {
       return showDialog(
@@ -44,7 +82,8 @@ class _ProductPageState extends State<ProductPage> {
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: bg3Color,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             content: SingleChildScrollView(
               child: Column(
                 children: [
@@ -91,9 +130,6 @@ class _ProductPageState extends State<ProductPage> {
       backgroundColor: const Color(0xffECEDEF),
       body: ListView(
         children: [
-          // ======================================================
-          // IMAGE CAROUSEL
-          // ======================================================
           Stack(
             children: [
               SizedBox(
@@ -101,12 +137,10 @@ class _ProductPageState extends State<ProductPage> {
                 child: PageView.builder(
                   itemCount: images.length,
                   onPageChanged: (index) => setState(() => currentIndex = index),
-                  // PENTING: Struktur PageView.builder yang Benar
                   itemBuilder: (context, index) => Image.network(
                     images[index],
                     fit: BoxFit.cover,
-                    // Perbaikan errorBuilder: Mengganti __ dan ___ dengan _ yang jelas
-                    errorBuilder: (context, error, stackTrace) => 
+                    errorBuilder: (context, error, stackTrace) =>
                         Image.asset('assets/image_shoes.png', fit: BoxFit.cover),
                   ),
                 ),
@@ -137,9 +171,6 @@ class _ProductPageState extends State<ProductPage> {
                 .toList(),
           ),
 
-          // ======================================================
-          // PRODUCT INFO CONTENT
-          // ======================================================
           Container(
             width: double.infinity,
             margin: const EdgeInsets.only(top: 17),
@@ -168,7 +199,7 @@ class _ProductPageState extends State<ProductPage> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => setState(() => isWishlist = !isWishlist),
+                      onTap: _toggleWishlist,
                       child: Image.asset(
                         isWishlist
                             ? 'assets/button_wishlist_blue.png'
@@ -181,7 +212,6 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 20),
 
-                // PRICE BOX
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -202,10 +232,8 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 20),
 
-                // DESCRIPTION
                 Text('Description',
-                    style:
-                        primaryTextStyle.copyWith(fontWeight: medium)),
+                    style: primaryTextStyle.copyWith(fontWeight: medium)),
                 const SizedBox(height: 12),
                 Text(description,
                     style: secondaryTextStyle.copyWith(fontWeight: light),
@@ -213,7 +241,6 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 30),
 
-                // CHAT + ADD TO CART
                 Row(
                   children: [
                     Container(
@@ -235,7 +262,6 @@ class _ProductPageState extends State<ProductPage> {
                       child: CustomButton(
                         text: 'Add to Cart',
                         onPressed: () async {
-                          // PENTING: Tambahkan pengecekan mounted sebelum showSuccessDialog jika diperlukan
                           await cartService.addToCart(product['id']);
                           showSuccessDialog();
                         },

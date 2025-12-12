@@ -3,8 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/product_card.dart';
 import 'package:shamo/widgets/product_tile.dart';
-import 'package:shamo/services/profile_service.dart';
-// import 'dart:developer'; // [DIHAPUS] - Tidak digunakan
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,27 +15,32 @@ class _HomePageState extends State<HomePage> {
   final supabase = Supabase.instance.client;
 
   // ============================
-  // USER PROFILE
+  // PROFILE STREAM
   // ============================
   Map<String, dynamic>? profile;
   bool loadingProfile = true;
 
   Future<void> fetchProfile() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
     try {
-      final res = await profileService.getProfile();
-      
-      if (!mounted) return; // Stabilitas Async
-      
+      final res = await supabase
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .single();
+
+      if (!mounted) return;
+
       setState(() {
         profile = res;
         loadingProfile = false;
       });
     } catch (e) {
-      if (!mounted) return; // Stabilitas Async
-      // Mengganti print menjadi debugPrint di sini (asumsi Anda sudah melakukannya di langkah sebelumnya)
-      // Jika Anda ingin print di terminal: import 'dart:developer'; lalu gunakan debugPrint.
-      // debugPrint("ERROR FETCH PROFILE: $e"); 
+      if (!mounted) return;
       setState(() => loadingProfile = false);
+      debugPrint('Error fetching profile: $e');
     }
   }
 
@@ -51,39 +54,47 @@ class _HomePageState extends State<HomePage> {
   Future<void> fetchProducts() async {
     try {
       final res = await supabase.from('products').select();
+      if (!mounted) return;
 
-      if (!mounted) return; // Stabilitas Async
-      
       setState(() {
         products = List<Map<String, dynamic>>.from(res);
         loadingProduct = false;
       });
     } catch (e) {
-      if (!mounted) return; // Stabilitas Async
-      // debugPrint("ERROR LOADING PRODUCTS: $e"); // Mengganti print
+      if (!mounted) return;
       setState(() => loadingProduct = false);
+      debugPrint('Error loading products: $e');
     }
   }
 
   // ============================
-  // INIT
+  // REFRESH FUNCTION
   // ============================
+  Future<void> _refreshAll() async {
+    setState(() {
+      loadingProfile = true;
+      loadingProduct = true;
+    });
+    await Future.wait([
+      fetchProfile(),
+      fetchProducts(),
+    ]);
+  }
+
   @override
   void initState() {
     super.initState();
-    fetchProfile();
-    fetchProducts();
+    _refreshAll();
   }
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> filtered =
-        selectedCategory == 'All Shoes'
-            ? products
-            : products.where((p) => p['category'] == selectedCategory).toList();
+    List<Map<String, dynamic>> filtered = selectedCategory == 'All Shoes'
+        ? products
+        : products.where((p) => p['category'] == selectedCategory).toList();
 
     return Scaffold(
-      backgroundColor: bg1Color, 
+      backgroundColor: bg1Color,
       body: SafeArea(
         child: loadingProduct
             ? const Center(child: CircularProgressIndicator(color: Colors.white))
@@ -113,22 +124,15 @@ class _HomePageState extends State<HomePage> {
                                 loadingProfile
                                     ? '@username'
                                     : '@${profile?['username'] ?? "-"}',
-                                style: subtitleTextStyle.copyWith(
-                                  fontSize: 16,
-                                ),
+                                style: subtitleTextStyle.copyWith(fontSize: 16),
                               ),
                             ],
                           ),
                         ),
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              image: AssetImage('assets/image_profile.png'),
-                            ),
-                          ),
+                        // REFRESH BUTTON
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: _refreshAll,
                         ),
                       ],
                     ),
@@ -160,7 +164,8 @@ class _HomePageState extends State<HomePage> {
                               ),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
-                                color: selected ? primaryColor : Colors.transparent,
+                                color:
+                                    selected ? primaryColor : Colors.transparent,
                                 border: Border.all(
                                   color: selected
                                       ? Colors.transparent
@@ -192,7 +197,6 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ======= POPULAR PRODUCTS =======
                         if (selectedCategory == 'All Shoes') ...[
                           Text(
                             "Popular Products",
@@ -203,16 +207,11 @@ class _HomePageState extends State<HomePage> {
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: products
-                                  .take(3)
-                                  .map((p) => ProductCard(p))
-                                  .toList(),
+                              children:
+                                  products.take(3).map((p) => ProductCard(p)).toList(),
                             ),
                           ),
-
                           const SizedBox(height: 30),
-
-                          // ======= NEW ARRIVALS =======
                           Text(
                             "New Arrivals",
                             style: primaryTextStyle.copyWith(
@@ -220,9 +219,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           const SizedBox(height: 14),
                           Column(
-                            children: products
-                                .map((p) => ProductTile(p))
-                                .toList(),
+                            children: products.map((p) => ProductTile(p)).toList(),
                           ),
                         ] else ...[
                           Text(
@@ -239,9 +236,8 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 )
                               : Column(
-                                  children: filtered
-                                      .map((p) => ProductTile(p))
-                                      .toList(),
+                                  children:
+                                      filtered.map((p) => ProductTile(p)).toList(),
                                 ),
                         ]
                       ],
