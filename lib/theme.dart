@@ -1,3 +1,4 @@
+// lib/theme.dart (Perbaikan Duplikasi dan Penambahan alertTextStyle)
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -5,7 +6,7 @@ double defaultMargin = 30.0;
 
 Color primaryColor = Color(0xff6C5ECF);
 Color secondaryColor = Color(0xff38ABBE);
-Color alertColor = Color(0xffED6363);
+Color alertColor = Color(0xffED6363); // Ini adalah satu-satunya deklarasi alertColor
 Color priceColor = Color(0xff2C96F1);
 Color bg1Color = Color(0xff1F1D2B);
 Color bg2Color = Color(0xff2B2937);
@@ -23,6 +24,9 @@ TextStyle priceTextStyle = GoogleFonts.poppins(color: priceColor);
 TextStyle subtitleTextStyle = GoogleFonts.poppins(color: subtitleTextColor);
 
 TextStyle purpleTextStyle = GoogleFonts.poppins(color: primaryColor);
+
+// Penambahan yang hilang
+TextStyle alertTextStyle = GoogleFonts.poppins(color: alertColor); 
 
 FontWeight light = FontWeight.w300;
 FontWeight regular = FontWeight.w400;

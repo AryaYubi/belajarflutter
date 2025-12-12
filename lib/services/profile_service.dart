@@ -1,11 +1,13 @@
-// import 'package:supabase_flutter/supabase_flutter.dart'; // [DIHAPUS]
-import 'supabase_service.dart';
+// lib/services/profile_service.dart (UPDATE)
+import 'package:supabase_flutter/supabase_flutter.dart'; // Tambahkan impor ini jika Anda mencabutnya
+import 'supabase_service.dart'; // Mengimport 'supabaseClient'
 
 class ProfileService {
   Future<Map<String, dynamic>?> getProfile() async {
-    final uid = supabase.auth.currentUser!.id;
+    // Ganti 'supabase' menjadi 'supabaseClient'
+    final uid = supabaseClient.auth.currentUser!.id;
 
-    final res = await supabase
+    final res = await supabaseClient // Ganti 'supabase' menjadi 'supabaseClient'
         .from('profiles')
         .select()
         .eq('id', uid)
@@ -19,9 +21,11 @@ class ProfileService {
     required String username,
     String? avatarUrl,
   }) async {
-    final uid = supabase.auth.currentUser!.id;
+    // Ganti 'supabase' menjadi 'supabaseClient'
+    final uid = supabaseClient.auth.currentUser!.id;
 
-    await supabase.from('profiles').update({
+    supabaseClient // Ganti 'supabase' menjadi 'supabaseClient'
+        .from('profiles').update({
       'name': name,
       'username': username,
       if (avatarUrl != null) 'avatar_url': avatarUrl,

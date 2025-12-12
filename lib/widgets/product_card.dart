@@ -1,11 +1,13 @@
+// lib/widgets/product_card.dart
+
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
-// NOTE: Definisi ProductCard yang pertama di file ini telah dihapus
-// karena redundan dan tidak mengambil data Supabase.
+// import 'package:shamo/pages/product_page.dart'; // Tidak perlu jika menggunakan Named Route '/product'
 
 class ProductCard extends StatelessWidget {
+  // Menerima data produk sebagai Map<String, dynamic> dari Supabase Stream
   final Map<String, dynamic> product;
-  // Perbaikan: use_key_in_widget_constructors (menambahkan super.key)
+
   const ProductCard(this.product, {super.key}); 
 
   @override
@@ -14,9 +16,11 @@ class ProductCard extends StatelessWidget {
     final String imageUrl = product['image_url'] ?? '';
     final String category = product['category'] ?? 'Unknown';
     final String name = product['name'] ?? '';
-    final dynamic price = product['price'] ?? 0;
+    // Konversi dynamic/numeric dari DB ke String/double untuk tampilan
+    final String priceString = product['price']?.toStringAsFixed(2) ?? '0.00';
 
     return GestureDetector(
+      // Navigasi ke halaman detail produk (/product) dan kirim data produk
       onTap: () => Navigator.pushNamed(context, '/product', arguments: product),
       child: Container(
         width: 215,
@@ -24,7 +28,7 @@ class ProductCard extends StatelessWidget {
         margin: EdgeInsets.only(right: defaultMargin),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: const Color(0xffECEDEF),
+          color: const Color(0xffECEDEF), // Warna latar belakang kartu
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,9 +45,8 @@ class ProductCard extends StatelessWidget {
                 width: 215,
                 height: 150,
                 fit: BoxFit.cover,
-                // Perbaikan: errorBuilder - mengganti _ dan __ dengan parameter eksplisit
                 errorBuilder: (ctx, error, stackTrace) => Image.asset(
-                  'assets/image_shoes.png',
+                  'assets/image_shoes.png', // Fallback image
                   width: 215,
                   height: 150,
                   fit: BoxFit.cover,
@@ -73,7 +76,7 @@ class ProductCard extends StatelessWidget {
                     style: primaryTextStyle.copyWith(
                       fontSize: 18,
                       fontWeight: semiBold,
-                      color: const Color(0xff2E2E2E),
+                      color: const Color(0xff2E2E2E), // Warna teks nama
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -83,7 +86,7 @@ class ProductCard extends StatelessWidget {
 
                   // PRICE
                   Text(
-                    '\$${price.toString()}',
+                    '\$$priceString',
                     style: priceTextStyle.copyWith(
                       fontSize: 14,
                       fontWeight: medium,

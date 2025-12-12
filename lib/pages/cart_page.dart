@@ -1,9 +1,11 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+// lib/pages/cart_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/cart_card.dart';
+import 'package:shamo/services/cart_service.dart'; // Wajib diimpor
 
-// [IMPORTS TIDAK DIGUNAKAN DIHAPUS]
+// [ASUMSI: CartCard, theme.dart, dan CartItemModel sudah ada dan diimpor dengan benar]
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -13,9 +15,6 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  // ASUMSI: Supabase sudah diinisialisasi di main.dart
-  final supabase = Supabase.instance.client;
-
   bool isLoading = true;
   List<Map<String, dynamic>> cartItems = [];
   double subtotal = 0;
@@ -28,32 +27,32 @@ class _CartPageState extends State<CartPage> {
 
   // Fetch data cart dari Supabase
   Future<void> fetchCart() async {
-    // PENTING: Tambahkan pengecekan mounted sebelum setState
-    final userId = supabase.auth.currentUser!.id;
+    try {
+      final res = await cartService.getCartItems(); // Menggunakan Service
+      
+      // Hitung subtotal
+      double total = 0;
+      for (var item in res) {
+        final price = (item['products']['price'] ?? 0).toDouble();
+        final qty = item['qty'] as int? ?? 1; // Menggunakan kolom 'qty'
+        total += price * qty;
+      }
 
-    final res = await supabase
-        .from('carts')
-        .select('id, quantity, products(*)')
-        .eq('user_id', userId);
+      if (!mounted) return;
 
-    List<Map<String, dynamic>> items =
-        List<Map<String, dynamic>>.from(res);
-
-    // Hitung subtotal
-    double total = 0;
-    for (var item in items) {
-      final price = (item['products']['price'] ?? 0).toDouble();
-      final qty = item['quantity'] ?? 1;
-      total += price * qty;
+      setState(() {
+        cartItems = res;
+        subtotal = total;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        // Tampilkan error jika ada
+      });
+      print('Error loading cart: $e');
     }
-
-    if (!mounted) return; // Pengecekan stabilitas async
-
-    setState(() {
-      cartItems = items;
-      subtotal = total;
-      isLoading = false;
-    });
   }
 
   @override
@@ -82,16 +81,19 @@ class _CartPageState extends State<CartPage> {
                       padding: EdgeInsets.symmetric(horizontal: defaultMargin),
                       children: cartItems
                           .map((item) => CartCard(
+                                // Mengirim data ke CartCard
                                 cartId: item['id'],
-                                product: item['products'],
-                                quantity: item['quantity'],
-                                onUpdate: fetchCart,
+                                product: item['products'], 
+                                quantity: item['qty'], // Menggunakan 'qty'
+                                onUpdate: fetchCart, // Callback untuk refresh
                               ))
                           .toList(),
                     ),
 
       // FOOTER BAR
-      bottomNavigationBar: SizedBox(
+      bottomNavigationBar: cartItems.isEmpty
+          ? const SizedBox() // Sembunyikan footer jika keranjang kosong
+          : SizedBox(
         height: 180,
         child: Column(
           children: [
