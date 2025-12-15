@@ -1,31 +1,90 @@
-// lib/services/chat_service.dart (CLEANED)
-import 'package:supabase_flutter/supabase_flutter.dart'; 
-import 'supabase_service.dart'; // Mengimport 'supabaseClient'
+import 'supabase_service.dart';
 
 class ChatService {
-  Stream<List<Map<String, dynamic>>> getMessagesStream() {
-    // Ganti 'supabase' menjadi 'supabaseClient'
+  /// Ambil atau buat chat antara user (buyer) dan seller
+  Future<String> getOrCreateChat({
+    required String sellerId,
+  }) async {
     final userId = supabaseClient.auth.currentUser!.id;
 
-    return supabaseClient // Ganti 'supabase' menjadi 'supabaseClient'
+    // 1️⃣ Cek apakah chat user ↔ seller sudah ada (via RPC)
+    final existing = await supabaseClient
+        .rpc('get_chat_between_user_seller', params: {
+          'user_id_param': userId,
+          'seller_id_param': sellerId,
+        });
+
+    if (existing != null && existing.isNotEmpty) {
+      return existing[0]['chat_id'];
+    }
+
+    // 2️⃣ Buat chat baru
+    final chat = await supabaseClient
+        .from('chats')
+        .insert({})
+        .select('id')
+        .single();
+
+    final chatId = chat['id'];
+
+    // 3️⃣ Tambahkan member chat (user & seller)
+    await supabaseClient.from('chat_members').insert([
+      {
+        'chat_id': chatId,
+        'user_id': userId,
+        'role': 'user',
+      },
+      {
+        'chat_id': chatId,
+        'user_id': sellerId,
+        'role': 'seller',
+      },
+    ]);
+
+    return chatId;
+  }
+
+  /// Ambil semua chat milik user (untuk ChatPage / inbox)
+  Future<List<Map<String, dynamic>>> getMyChats() async {
+    final userId = supabaseClient.auth.currentUser!.id;
+
+    final response = await supabaseClient
+        .from('chat_members')
+        .select('''
+          chat_id,
+          chats (
+            id,
+            chat_messages (
+              content,
+              created_at
+            )
+          )
+        ''')
+        .eq('user_id', userId);
+
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  /// Stream pesan realtime berdasarkan chat_id
+  Stream<List<Map<String, dynamic>>> getMessages(String chatId) {
+    return supabaseClient
         .from('chat_messages')
         .stream(primaryKey: ['id'])
-        .eq('user_id', userId) 
+        .eq('chat_id', chatId)
         .order('created_at', ascending: true);
   }
 
+  /// Kirim pesan (sender = user yang sedang login)
   Future<void> sendMessage({
+    required String chatId,
     required String message,
-    required bool isFromUser, 
   }) async {
-    // Ganti 'supabase' menjadi 'supabaseClient'
     final userId = supabaseClient.auth.currentUser!.id;
 
-    supabaseClient // Ganti 'supabase' menjadi 'supabaseClient'
-        .from('chat_messages').insert({
-      'user_id': userId,
-      'message': message, 
-      'is_from_user': isFromUser,
+    await supabaseClient.from('chat_messages').insert({
+      'chat_id': chatId,
+      'sender_id': userId,
+      'content': message,
     });
   }
 }

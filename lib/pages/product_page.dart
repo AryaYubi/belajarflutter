@@ -3,6 +3,9 @@ import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/custom_button.dart';
 import 'package:shamo/services/cart_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shamo/services/chat_service.dart';
+import 'package:shamo/pages/detail_chat_page.dart';
+
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
@@ -315,32 +318,53 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 30),
 
-                // CHAT + ADD TO CART
-                Row(
-                  children: [
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: primaryColor),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/detail-chat'),
-                        child: Icon(Icons.chat,
-                            color: primaryColor, size: 28),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: CustomButton(
-                        text: 'Add to Cart',
-                        onPressed: () => handleAddToCart(productId),
-                      ),
-                    ),
-                  ],
-                )
+               // CHAT + ADD TO CART
+Row(
+  children: [
+    Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        border: Border.all(color: primaryColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: GestureDetector(
+        onTap: () async {
+          final sellerId = product['seller_id'];
+
+          if (sellerId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Seller not found')),
+            );
+            return;
+          }
+
+          final chatId = await chatService.getOrCreateChat(
+            sellerId: sellerId,
+          );
+
+          if (!context.mounted) return;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetailChatPage(chatId: chatId),
+            ),
+          );
+        },
+        child: Icon(Icons.chat,
+            color: primaryColor, size: 28),
+      ),
+    ),
+    const SizedBox(width: 16),
+    Expanded(
+      child: CustomButton(
+        text: 'Add to Cart',
+        onPressed: () => handleAddToCart(productId),
+      ),
+    ),
+  ],
+)
               ],
             ),
           ),
