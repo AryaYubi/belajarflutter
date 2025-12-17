@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
 import 'package:shamo/services/profile_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'orders_page.dart'; // Import the new page
+import 'orders_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -44,7 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> handleLogout() async {
     await supabase.auth.signOut();
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/sign-in', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(context, '/sign-in', (_) => false);
   }
 
   void navigateToEditProfile() async {
@@ -63,17 +63,28 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // ======================================================
+  // MENU ITEM (FIXED: HOVER + CURSOR WEB)
+  // ======================================================
   Widget menuItem(String text, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(top: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(text, style: secondaryTextStyle.copyWith(fontSize: 13)),
-            Icon(Icons.chevron_right, color: primaryTextColor),
-          ],
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          margin: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                text,
+                style: secondaryTextStyle.copyWith(fontSize: 13),
+              ),
+              Icon(Icons.chevron_right, color: primaryTextColor),
+            ],
+          ),
         ),
       ),
     );
@@ -98,7 +109,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   ClipOval(
                     child: avatarUrl == null
-                        ? Image.asset('assets/image_profile.png', width: 64)
+                        ? Image.asset(
+                            'assets/image_profile.png',
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.cover,
+                          )
                         : Image.network(
                             avatarUrl,
                             width: 64,
@@ -131,9 +147,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     onPressed: _refreshProfile,
                     icon: const Icon(Icons.refresh, color: Color(0xff504F5E)),
                   ),
-                  GestureDetector(
-                    onTap: handleLogout,
-                    child: Image.asset('assets/button_exit.png', width: 20),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: handleLogout,
+                      child:
+                          Image.asset('assets/button_exit.png', width: 20),
+                    ),
                   ),
                 ],
               ),
@@ -149,9 +169,11 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                Text('Account',
-                    style: primaryTextStyle.copyWith(
-                        fontSize: 16, fontWeight: semiBold)),
+                Text(
+                  'Account',
+                  style: primaryTextStyle.copyWith(
+                      fontSize: 16, fontWeight: semiBold),
+                ),
                 menuItem('Edit Profile', onTap: navigateToEditProfile),
                 menuItem('Your Orders', onTap: () {
                   Navigator.push(
@@ -161,9 +183,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 }),
                 menuItem('Help'),
                 const SizedBox(height: 30),
-                Text('General',
-                    style: primaryTextStyle.copyWith(
-                        fontSize: 16, fontWeight: semiBold)),
+                Text(
+                  'General',
+                  style: primaryTextStyle.copyWith(
+                      fontSize: 16, fontWeight: semiBold),
+                ),
                 menuItem('Privacy & Policy'),
                 menuItem('Term of Service'),
                 menuItem('Rate App'),
