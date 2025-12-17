@@ -43,7 +43,7 @@ class ProductCard extends StatelessWidget {
               child: Image.network(
                 imageUrl,
                 width: 215,
-                height: 150,
+                height: 140,
                 fit: BoxFit.cover,
                 errorBuilder: (ctx, error, stackTrace) => Image.asset(
                   'assets/image_shoes.png', // Fallback image

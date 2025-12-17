@@ -26,6 +26,7 @@ class CustomButton extends StatelessWidget {
         ),
         child: Text(
           text,
+          textAlign: TextAlign.center,
           style: primaryTextStyle.copyWith(fontSize: 16, fontWeight: medium),
         ),
       ),

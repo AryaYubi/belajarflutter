@@ -18,6 +18,8 @@ class _ProductPageState extends State<ProductPage> {
   int currentIndex = 0;
   bool isWishlist = false;
   int currentQuantity = 1;
+  List<Map<String, dynamic>> familiarShoes = [];
+  bool loadingFamiliarShoes = true;
 
   final supabase = Supabase.instance.client;
 
@@ -28,6 +30,7 @@ class _ProductPageState extends State<ProductPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _checkIfWishlist();
+    _loadFamiliarShoes();
   }
 
   Future<void> _checkIfWishlist() async {
@@ -46,6 +49,39 @@ class _ProductPageState extends State<ProductPage> {
   }
 
   // ───────────────────────────────────────────────
+  // LOAD FAMILIAR SHOES (SAME CATEGORY)
+  // ───────────────────────────────────────────────
+  Future<void> _loadFamiliarShoes() async {
+    final product =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final category = product['category'];
+
+    try {
+      final response = await supabase
+          .from('products')
+          .select()
+          .eq('category', category);
+
+      if (mounted) {
+        setState(() {
+          // Filter out the current product and take max 5
+          familiarShoes = (response as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .where((e) => e['id'] != product['id'])
+              .take(5)
+              .toList();
+          loadingFamiliarShoes = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => loadingFamiliarShoes = false);
+        debugPrint('Error loading familiar shoes: $e');
+      }
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // TOGGLE WISHLIST
   // ───────────────────────────────────────────────
   Future<void> _toggleWishlist() async {
@@ -54,21 +90,49 @@ class _ProductPageState extends State<ProductPage> {
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
-    if (isWishlist) {
-      await supabase
-          .from('wishlists')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('product_id', product['id']);
+    try {
+      if (isWishlist) {
+        await supabase
+            .from('wishlists')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('product_id', product['id']);
 
-      if (mounted) setState(() => isWishlist = false);
-    } else {
-      await supabase.from('wishlists').insert({
-        'user_id': user.id,
-        'product_id': product['id'],
-      });
+        if (mounted) {
+          setState(() => isWishlist = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Has been removed from the Wishlist'),
+              backgroundColor: alertColor,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        await supabase.from('wishlists').insert({
+          'user_id': user.id,
+          'product_id': product['id'],
+        });
 
-      if (mounted) setState(() => isWishlist = true);
+        if (mounted) {
+          setState(() => isWishlist = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Has been added to the Wishlist'),
+              backgroundColor: secondaryColor,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: alertColor,
+        ),
+      );
     }
   }
 
@@ -189,7 +253,7 @@ class _ProductPageState extends State<ProductPage> {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Image.asset('assets/Union.png', width: 32)),
+                      child: Image.asset('assets/back_icon.png', width: 32)),
                     const Icon(Icons.shopping_bag,
                         color: Colors.black, size: 28),
                   ],
@@ -318,73 +382,131 @@ class _ProductPageState extends State<ProductPage> {
 
                 const SizedBox(height: 30),
 
-               // CHAT + ADD TO CART
-Row(
-  children: [
-    Container(
-      width: 54,
-      height: 54,
-      decoration: BoxDecoration(
-        border: Border.all(color: primaryColor),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: GestureDetector(
-onTap: () async {
-  final sellerId = product['seller_id'];
-  final productId = product['id'];
+                // ───────────────────────────────────────────────
+                // FAMILIAR SHOES SECTION
+                // ───────────────────────────────────────────────
+                Text(
+                  'Familiar Shoes',
+                  style: primaryTextStyle.copyWith(
+                    fontSize: 16,
+                    fontWeight: semiBold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                loadingFamiliarShoes
+                    ? const Center(child: CircularProgressIndicator())
+                    : familiarShoes.isEmpty
+                        ? Text(
+                            'No other shoes in this category',
+                            style: secondaryTextStyle,
+                          )
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: familiarShoes.map((shoe) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/product',
+                                      arguments: shoe,
+                                    );
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.only(right: 12),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        shoe['image_url'] ?? '',
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (ctx, error, stackTrace) =>
+                                            Image.asset(
+                                          'assets/image_shoes.png',
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
 
-  if (sellerId == null || productId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Seller / Product not found')),
-    );
-    return;
-  }
+                const SizedBox(height: 30),
 
-  final chatId = await chatService.getOrCreateChat(
-    sellerId: sellerId,
-    productId: productId,
-  );
+                // CHAT + ADD TO CART
+                Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: primaryColor),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: GestureDetector(
+                        onTap: () async {
+                          final sellerId = product['seller_id'];
+                          final productId = product['id'];
 
-  // KIRIM PRODUCT MESSAGE (CHAT BUBBLE)
-await chatService.sendProductMessage(
-  chatId: chatId,
-  product: {
-    'id': product['id'],
-    'name': product['name'],
-    'price': product['price'],
-    'image_url': product['image_url'],
-  },
-);
+                          if (sellerId == null || productId == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Seller / Product not found')),
+                            );
+                            return;
+                          }
 
+                          final chatId =
+                              await chatService.getOrCreateChat(
+                            sellerId: sellerId,
+                            productId: productId,
+                          );
 
-  if (!context.mounted) return;
+                          // KIRIM PRODUCT MESSAGE (CHAT BUBBLE)
+                          await chatService.sendProductMessage(
+                            chatId: chatId,
+                            product: {
+                              'id': product['id'],
+                              'name': product['name'],
+                              'price': product['price'],
+                              'image_url': product['image_url'],
+                            },
+                          );
 
-  // 🔥 SATU NAVIGATOR SAJA
-Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => DetailChatPage(
-      chatId: chatId,
-      pendingProduct: product, // ✅ hanya UI
-    ),
-  ),
-);
-},
+                          if (!context.mounted) return;
 
+                          // 🔥 SATU NAVIGATOR SAJA
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DetailChatPage(
+                                chatId: chatId,
+                                pendingProduct: product, // ✅ hanya UI
+                              ),
+                            ),
+                          );
+                        },
+                        child: Icon(Icons.chat,
+                            color: primaryColor, size: 28),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: CustomButton(
+                        text: 'Add to Cart',
+                        onPressed: () => handleAddToCart(productId),
+                      ),
+                    ),
+                  ],
+                ),
 
-        child: Icon(Icons.chat,
-            color: primaryColor, size: 28),
-      ),
-    ),
-    const SizedBox(width: 16),
-    Expanded(
-      child: CustomButton(
-        text: 'Add to Cart',
-        onPressed: () => handleAddToCart(productId),
-      ),
-    ),
-  ],
-)
+                const SizedBox(height: 50),
               ],
             ),
           ),
