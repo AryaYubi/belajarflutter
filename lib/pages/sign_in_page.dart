@@ -53,8 +53,7 @@ class _SignInPageState extends State<SignInPage> {
         throw Exception("Email atau password salah");
       }
 
-      // Redirect via SPLASH (sudah ada pengecekan 'mounted' di sini)
-      Navigator.pushReplacementNamed(context, '/splash');
+      Navigator.pushReplacementNamed(context, '/home');
 
     } catch (e) {
       // PENTING: Pengecekan mounted sebelum menggunakan context di catch block

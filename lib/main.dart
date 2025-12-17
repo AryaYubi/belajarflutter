@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: session != null ? '/home' : '/sign-in',
+      initialRoute: session != null ? '/home' : '/splash',
       routes: {
         '/splash': (context) => const SplashPage(),
         '/sign-in': (context) => const SignInPage(),
