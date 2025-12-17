@@ -6,20 +6,96 @@ class SignInPage extends StatelessWidget {
   const SignInPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    Widget header() {
-      return Container(
-        margin: const EdgeInsets.only(top: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Login', style: primaryTextStyle.copyWith(fontSize: 24, fontWeight: semiBold)),
-            const SizedBox(height: 2),
-            Text('Sign In to Continue', style: subtitleTextStyle),
-          ],
+  State<SignInPage> createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
+  final supabase = Supabase.instance.client;
+
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  bool isLoading = false;
+
+  // ==========================================================
+  // LOGIN FUNCTION
+  // ==========================================================
+  Future<void> signIn() async {
+    setState(() => isLoading = true);
+
+    // VALIDASI INPUT
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.trim().isEmpty) {
+      
+      // PENTING: Pengecekan mounted sebelum menggunakan context
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: alertColor,
+          content: const Text("Email dan password tidak boleh kosong."),
+        ),
+      );
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // PENTING: Pengecekan mounted setelah await
+      if (!mounted) return; 
+
+      if (response.session == null) {
+        throw Exception("Email atau password salah");
+      }
+
+      Navigator.pushReplacementNamed(context, '/home');
+
+    } catch (e) {
+      // PENTING: Pengecekan mounted sebelum menggunakan context di catch block
+      if (!mounted) return; 
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: alertColor,
+          content: Text("Login gagal: $e"),
         ),
       );
     }
+
+    // PENTING: Pengecekan mounted sebelum setState akhir
+    if (!mounted) return; 
+    
+    setState(() => isLoading = false);
+  }
+
+  // ==========================================================
+  // UI COMPONENTS
+  // ==========================================================
+
+  Widget header() {
+    return Container(
+      margin: const EdgeInsets.only(top: 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Login',
+            style: primaryTextStyle.copyWith(
+              fontSize: 24,
+              fontWeight: semiBold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text('Sign In to Continue', style: subtitleTextStyle),
+        ],
+      ),
+    );
+  }
 
     Widget inputField(String label, String iconPath, String hint, {bool isObscure = false}) {
       return Container(

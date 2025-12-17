@@ -46,20 +46,37 @@ class _ProductPageState extends State<ProductPage> {
       );
     }
 
-    Widget indicator(int index) {
-      return Container(
-        width: currentIndex == index ? 16 : 4,
-        height: 4,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: currentIndex == index ? primaryColor : const Color(0xffC4C4C4),
-        ),
-      );
-    }
+  // Indicator for image slider
+  Widget indicator(int index) {
+    return Container(
+      width: currentIndex == index ? 16 : 4,
+      height: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: currentIndex == index ? primaryColor : subtitleTextColor,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final product =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+
+    final int productId = product['id'];
+    final String name = product['name'] ?? '';
+    final String category = product['category'] ?? '';
+    final String description =
+        product['description'] ?? 'No description provided.';
+    final dynamic price = product['price'] ?? 0;
+    final String priceString = price.toStringAsFixed(2);
+    final String imageUrl = product['image_url'] ?? '';
+
+    final List<String> images = [imageUrl, imageUrl, imageUrl];
 
     return Scaffold(
-      backgroundColor: const Color(0xffECEDEF),
+      backgroundColor: bg2Color,
       body: ListView(
         children: [
           Stack(
@@ -77,8 +94,11 @@ class _ProductPageState extends State<ProductPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.chevron_left)),
-                    const Icon(Icons.shopping_bag, color: Colors.black),
+                    GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.chevron_left, size: 32)),
+                    Icon(Icons.shopping_bag,
+                      color: primaryTextColor, size: 28),
                   ],
                 ),
               ),

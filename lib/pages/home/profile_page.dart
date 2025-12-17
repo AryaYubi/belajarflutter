@@ -44,9 +44,23 @@ class ProfilePage extends StatelessWidget {
                       ],
                     ),
                   ),
+<<<<<<< Updated upstream
                   GestureDetector(
                     onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/sign-in', (route) => false),
                     child: Image.asset('assets/button_exit.png', width: 20),
+=======
+                  IconButton(
+                    onPressed: _refreshProfile,
+                    icon: Icon(Icons.refresh, color: subtitleTextColor),
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: handleLogout,
+                      child:
+                          Image.asset('assets/button_exit.png', width: 20),
+                    ),
+>>>>>>> Stashed changes
                   ),
                 ],
               ),

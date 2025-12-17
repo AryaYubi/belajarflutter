@@ -15,7 +15,7 @@ class ProductCard extends StatelessWidget {
         margin: EdgeInsets.only(right: defaultMargin),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: const Color(0xffECEDEF), // Card color from original main.dart
+            color: bg2Color, // use theme bg2Color for card background
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,15 +39,13 @@ class ProductCard extends StatelessWidget {
                     style: secondaryTextStyle.copyWith(fontSize: 12),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    product['name'],
-                    style: TextStyle(
-                      color: const Color(0xff2E2E2E),
-                      fontSize: 18,
-                      fontWeight: semiBold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+
+                  // NAME
+                      Text('COURT VISION 2.0',
+                        style: primaryTextStyle.copyWith(
+                          color: primaryTextColor, fontSize: 18, fontWeight: semiBold),
+                        overflow: TextOverflow.ellipsis),
+
                   const SizedBox(height: 6),
                   Text(
                     '\$${product['price']}',

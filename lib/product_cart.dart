@@ -9,8 +9,11 @@ class ProductCard extends StatelessWidget {
       child: Container(
         width: 215,
         height: 278,
-        margin: EdgeInsets.only(right: defaultMargin),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Color(0xffECEDEF)),
+        margin: EdgeInsets.only(right: defaultMargin), 
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20), 
+          color: bg2Color,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -22,9 +25,13 @@ class ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Hiking', style: secondaryTextStyle.copyWith(fontSize: 12)),
-                  SizedBox(height: 6),
-                  Text('COURT VISION 2.0', style: TextStyle(color: Color(0xff2E2E2E), fontSize: 18, fontWeight: semiBold), overflow: TextOverflow.ellipsis),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6), 
+                  // FIX: Hapus 'const' karena semiBold bukan constant
+                      Text('COURT VISION 2.0',
+                        style: primaryTextStyle.copyWith(
+                          color: primaryTextColor, fontSize: 18, fontWeight: semiBold),
+                        overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 6), 
                   Text('\$58,67', style: priceTextStyle.copyWith(fontSize: 14, fontWeight: medium)),
                 ],
               ),

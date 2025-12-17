@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
         ? products
         : products.where((p) => p['cat'] == selectedCategory).toList();
 
+<<<<<<< Updated upstream
     return SafeArea(
       child: ListView(
         children: [
@@ -42,6 +43,51 @@ class _HomePageState extends State<HomePage> {
                       Text('Hallo, Alex', style: primaryTextStyle.copyWith(fontSize: 24, fontWeight: semiBold)),
                       Text('@alexkeinn', style: subtitleTextStyle.copyWith(fontSize: 16)),
                     ],
+=======
+    return Scaffold(
+      backgroundColor: bg1Color,
+      body: SafeArea(
+        child: loadingProduct
+          ? Center(child: CircularProgressIndicator(color: primaryTextColor))
+            : ListView(
+                children: [
+                  // HEADER
+                  Container(
+                    margin: EdgeInsets.only(
+                      top: defaultMargin,
+                      left: defaultMargin,
+                      right: defaultMargin,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                loadingProfile
+                                    ? 'Hallo, User'
+                                    : 'Hallo, ${profile?['name'] ?? "User"}',
+                                style: primaryTextStyle.copyWith(
+                                    fontSize: 24, fontWeight: semiBold),
+                              ),
+                              Text(
+                                loadingProfile
+                                    ? '@username'
+                                    : '@${profile?['username'] ?? "-"}',
+                                style: subtitleTextStyle.copyWith(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // REFRESH BUTTON
+                        IconButton(
+                          icon: Icon(Icons.refresh, color: subtitleTextColor),
+                          onPressed: _refreshAll,
+                        ),
+                      ],
+                    ),
+>>>>>>> Stashed changes
                   ),
                 ),
                 Container(
@@ -75,8 +121,72 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Text(e, style: isSelected ? primaryTextStyle.copyWith(fontSize: 13, fontWeight: medium) : subtitleTextStyle.copyWith(fontSize: 13, fontWeight: medium)),
                     ),
+<<<<<<< Updated upstream
                   );
                 }).toList(),
+=======
+                  ),
+
+                  // PRODUCT SECTION
+                  Container(
+                    margin: EdgeInsets.only(
+                      top: defaultMargin,
+                      left: defaultMargin,
+                      right: defaultMargin,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (selectedCategory == 'All Shoes') ...[
+                          Text(
+                            "Popular Products",
+                            style: primaryTextStyle.copyWith(
+                                fontSize: 22, fontWeight: semiBold),
+                          ),
+                          const SizedBox(height: 14),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children:
+                                  products.take(3).map((p) => ProductCard(p)).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          Text(
+                            "New Arrivals",
+                            style: primaryTextStyle.copyWith(
+                                fontSize: 22, fontWeight: semiBold),
+                          ),
+                          const SizedBox(height: 14),
+                          Column(
+                            children: products.map((p) => ProductTile(p)).toList(),
+                          ),
+                        ] else ...[
+                          Text(
+                            "For You",
+                            style: primaryTextStyle.copyWith(
+                                fontSize: 22, fontWeight: semiBold),
+                          ),
+                          const SizedBox(height: 14),
+                          filtered.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    "No items found",
+                                    style: primaryTextStyle,
+                                  ),
+                                )
+                              : Column(
+                                  children:
+                                      filtered.map((p) => ProductTile(p)).toList(),
+                                ),
+                        ]
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 100),
+                ],
+>>>>>>> Stashed changes
               ),
             ),
           ),

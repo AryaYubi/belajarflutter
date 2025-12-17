@@ -21,7 +21,30 @@ class EditProfilePage extends StatelessWidget {
                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: subtitleTextColor)),
               ),
             ),
+<<<<<<< Updated upstream
           ],
+=======
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: bg3Color,
+        appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+          backgroundColor: bg1Color,
+          elevation: 0,
+          centerTitle: true,
+            iconTheme: IconThemeData(color: primaryTextColor),
+          title: Text('Edit Profile',
+              style: primaryTextStyle.copyWith(fontSize: 18, fontWeight: medium)),
+>>>>>>> Stashed changes
         ),
       );
     }
@@ -33,7 +56,13 @@ class EditProfilePage extends StatelessWidget {
         backgroundColor: bg1Color,
         elevation: 0,
         centerTitle: true,
+<<<<<<< Updated upstream
         title: Text('Edit Profile', style: primaryTextStyle.copyWith(fontSize: 18, fontWeight: medium)),
+=======
+        title: Text('Edit Profile',
+            style: primaryTextStyle.copyWith(fontSize: 18, fontWeight: medium)),
+        iconTheme: IconThemeData(color: primaryColor),
+>>>>>>> Stashed changes
         actions: [
           IconButton(icon: Icon(Icons.check, color: primaryColor), onPressed: () {}),
         ],
