@@ -107,7 +107,7 @@ class _ProductPageState extends State<ProductPage> {
                   alignment: Alignment.centerLeft,
                   child: GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: Icon(Icons.close, color: primaryTextColor),
+                    child: Image.asset('assets/Union.png', width: 24),
                   ),
                 ),
                 Image.asset('assets/icon_success.png', width: 100),
@@ -188,8 +188,8 @@ class _ProductPageState extends State<ProductPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.chevron_left, size: 32)),
+                      onTap: () => Navigator.pop(context),
+                      child: Image.asset('assets/Union.png', width: 32)),
                     const Icon(Icons.shopping_bag,
                         color: Colors.black, size: 28),
                   ],
@@ -329,29 +329,49 @@ Row(
         borderRadius: BorderRadius.circular(12),
       ),
       child: GestureDetector(
-        onTap: () async {
-          final sellerId = product['seller_id'];
+onTap: () async {
+  final sellerId = product['seller_id'];
+  final productId = product['id'];
 
-          if (sellerId == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Seller not found')),
-            );
-            return;
-          }
+  if (sellerId == null || productId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Seller / Product not found')),
+    );
+    return;
+  }
 
-          final chatId = await chatService.getOrCreateChat(
-            sellerId: sellerId,
-          );
+  final chatId = await chatService.getOrCreateChat(
+    sellerId: sellerId,
+    productId: productId,
+  );
 
-          if (!context.mounted) return;
+  // KIRIM PRODUCT MESSAGE (CHAT BUBBLE)
+await chatService.sendProductMessage(
+  chatId: chatId,
+  product: {
+    'id': product['id'],
+    'name': product['name'],
+    'price': product['price'],
+    'image_url': product['image_url'],
+  },
+);
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DetailChatPage(chatId: chatId),
-            ),
-          );
-        },
+
+  if (!context.mounted) return;
+
+  // 🔥 SATU NAVIGATOR SAJA
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) => DetailChatPage(
+      chatId: chatId,
+      pendingProduct: product, // ✅ hanya UI
+    ),
+  ),
+);
+},
+
+
         child: Icon(Icons.chat,
             color: primaryColor, size: 28),
       ),

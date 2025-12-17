@@ -10,25 +10,47 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart'; // supabaseClient
 
 class CheckoutPage extends StatefulWidget {
-  const CheckoutPage({super.key});
+  final List<Map<String, dynamic>>? items; // 👈 untuk BUY NOW
+  final bool isBuyNow;
+
+  const CheckoutPage({
+    super.key,
+    this.items,
+    this.isBuyNow = false,
+  });
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
 }
 
+
 class _CheckoutPageState extends State<CheckoutPage> {
   bool _isLoading = true;
   bool _isProcessing = false; // Untuk checkout button
+  List<Map<String, dynamic>> get _activeItems {
+  return widget.isBuyNow ? _buyNowItems : _cartItems;
+}
+
   List<Map<String, dynamic>> _cartItems = [];
+  List<Map<String, dynamic>> _buyNowItems = [];
+
   Map<String, dynamic>? _userProfile;
 
   final double _shippingCost = 10.0;
 
   @override
-  void initState() {
-    super.initState();
-    _fetchCheckoutData();
+  @override
+void initState() {
+  super.initState();
+
+  if (widget.isBuyNow) {
+    _buyNowItems = widget.items ?? [];
+    _isLoading = false;
+  } else {
+    _fetchCheckoutData(); // CART MODE
   }
+}
+
 
   Future<void> _fetchCheckoutData() async {
     try {
@@ -57,22 +79,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   double get _subtotal {
-    double total = 0.0;
-    for (var item in _cartItems) {
-      final double price = (item['products']['price'] ?? 0).toDouble();
-      final int qty = item['qty'] as int? ?? 0;
-      total += price * qty;
-    }
-    return total;
+  double total = 0.0;
+  for (var item in _activeItems) {
+    final price = (item['price'] ?? item['products']?['price'] ?? 0).toDouble();
+    final qty = item['quantity'] ?? item['qty'] ?? 1;
+    total += price * qty;
   }
+  return total;
+}
+
 
   int get _totalQuantity {
-    int total = 0;
-    for (var item in _cartItems) {
-      total += item['qty'] as int? ?? 0;
-    }
-    return total;
+  int total = 0;
+
+  for (var item in _activeItems) {
+    total += ((item['quantity'] ?? item['qty'] ?? 1) as num).toInt();
   }
+
+  return total;
+}
+
+
 
   double get _finalTotal => _subtotal + _shippingCost;
 
@@ -192,15 +219,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
           // List item keranjang
           Column(
-            children: _cartItems
-                .map((item) => CheckoutCard(
-                      name: item['products']['name'],
-                      imageUrl: item['products']['image_url'],
-                      price: (item['products']['price'] ?? 0).toDouble(),
-                      qty: item['qty'] as int,
-                    ))
-                .toList(),
-          ),
+  children: _activeItems.map((item) {
+    final product = widget.isBuyNow
+        ? item
+        : item['products'];
+
+    return CheckoutCard(
+      name: product['name'],
+      imageUrl: product['image_url'],
+      price: (product['price'] ?? 0).toDouble(),
+      qty: item['quantity'] ?? item['qty'] ?? 1,
+    );
+  }).toList(),
+),
+
 
           // Address
           Container(
