@@ -95,33 +95,47 @@ Future<void> handleSendMessage() async {
   // CHAT BUBBLE
   // =============================
 
-  Widget chatBubble(String text, bool isSender) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
+Widget chatBubble(String text, bool isSender) {
+  // BUNGKUS DENGAN ROW JUGA UNTUK ALIGNMENT
+  return Row(
+    mainAxisAlignment: isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
+    children: [
+      Container(
+        // Margin samakan dengan product
+        margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
+        
+        // 2. CONSTRAINT MAKSIMAL DISAMAKAN (225)
+        constraints: const BoxConstraints(
+          maxWidth: 225, // Agar chat tidak pernah lebih lebar dari produk
+          minWidth: 80,  // Agar tidak terlalu gepeng kalau chat pendek
         ),
+        
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSender ? primaryColor : bg2Color,
-          borderRadius: BorderRadius.circular(12),
+          color: isSender ? primaryColor : const Color(0xff2B2844),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(isSender ? 12 : 0),
+            topRight: Radius.circular(isSender ? 0 : 12),
+            bottomLeft: const Radius.circular(12),
+            bottomRight: const Radius.circular(12),
+          ),
         ),
-        child: Text(text, style: primaryTextStyle),
+        child: Text(
+          text,
+          style: primaryTextStyle.copyWith(
+            color: isSender ? const Color(0xff2B2844) : primaryTextColor
+          ),
+        ),
       ),
-    );
-  }
+    ],
+  );
+}
   Widget chatInput() {
   return Container(
     padding: EdgeInsets.all(defaultMargin),
     decoration: BoxDecoration(
       color: bg1Color,
       boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 8,
-        ),
       ],
     ),
     child: Row(
@@ -134,7 +148,7 @@ Future<void> handleSendMessage() async {
               hintText: 'Type message...',
               hintStyle: subtitleTextStyle,
               filled: true,
-              fillColor: bg2Color,
+              fillColor: bg1Color,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -153,92 +167,101 @@ Future<void> handleSendMessage() async {
 }
 
 Widget productMessageBubble(Map<String, dynamic> product) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: bg2Color,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: primaryColor),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ─── PRODUCT INFO ───
-        Row(
+  // BUNGKUS DENGAN ROW AGAR TIDAK STRETCH KE SAMPING
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.end, // Mentok Kiri
+    children: [
+      Container(
+        // 1. KUNCI LEBAR DISINI (225 pixel)
+        width: 225, 
+        
+        // Margin & Style
+        margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20, top: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xff2B2844),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        
+        child: Column(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                product['image_url'],
-                width: 54,
-                height: 54,
-                fit: BoxFit.cover,
-              ),
+            // --- GAMBAR & TEXT ---
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    product['image_url'],
+                    width: 50, // Gambar Kecil
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset('assets/image_shoes.png', width: 50, height: 50),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product['name'],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: primaryTextStyle.copyWith(fontSize: 13, fontWeight: semiBold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '\$${product['price']}',
+                        style: priceTextStyle.copyWith(fontSize: 13, fontWeight: medium),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product['name'],
-                    style: primaryTextStyle.copyWith(
-                      fontWeight: semiBold,
+            
+            const SizedBox(height: 10),
+
+            // --- TOMBOL KECIL ---
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 32, // Tinggi tombol 32
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: primaryColor),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () async { /* logic */ },
+                      child: Text('Add to Cart', style: primaryTextStyle.copyWith(color: primaryColor, fontSize: 10)),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '\$${product['price']}',
-                    style: priceTextStyle,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SizedBox(
+                    height: 32, // Tinggi tombol 32
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () async { /* logic */ },
+                      child: Text('Buy Now', style: primaryTextStyle.copyWith(color: const Color(0xff2B2844), fontSize: 10, fontWeight: semiBold)),
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
-
-      const SizedBox(height: 12),
-
-      // ─── ACTION BUTTONS ───
-Row(
-  children: [
-    Expanded(
-      child: OutlinedButton(
-        onPressed: () async {
-          await cartService.addToCart(product['id']);
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Added to cart')),
-          );
-        },
-        child: const Text('Add to Cart'),
       ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-      child: ElevatedButton(
-        onPressed: () async {
-          await cartService.addToCart(
-            product['id'],
-            qty: 1,
-          );
-
-          if (!mounted) return;
-
-          Navigator.pushNamed(context, '/cart');
-        },
-        child: const Text('Buy Now'),
-      ),
-    ),
-  ],
-),
-
     ],
-  ),
-);
+  );
 }
-
 
   // =============================
   // BUILD
@@ -248,10 +271,85 @@ Row(
     final currentUserId = supabase.auth.currentUser!.id;
 
     return Scaffold(
-      backgroundColor: bg3Color,
+      backgroundColor: bg1Color,
       appBar: AppBar(
         backgroundColor: bg1Color,
-        title: const Text('Shoe Store'),
+        elevation: 0,
+        centerTitle: false,
+        
+        // 1. DISINI LETAK TOMBOL BACK (MENGGUNAKAN ASSET)
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          // Ganti 'assets/icon_back.png' dengan nama file asset icon panah Anda
+          icon: Image.asset(
+            'assets/button_back.png', 
+            width: 8, // Sesuaikan ukuran icon back (biasanya kecil sekitar 8-10 width)
+          ),
+        ),
+
+        // 2. BAGIAN LOGO TOKO DAN STATUS
+        title: Row(
+          children: [
+            // Logo Toko & Online Status
+            Stack(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      // Pastikan asset logo toko sudah ada di folder assets
+                      image: AssetImage('assets/image_shop_logo.png'), 
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xff51C17E),
+                      border: Border.all(
+                        color: bg4Color,
+                        width: 2.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(width: 12),
+            
+            // Teks Nama & Status
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Shoe Store',
+                  style: primaryTextStyle.copyWith(
+                    fontWeight: medium,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  'Online',
+                  style: subtitleTextStyle.copyWith(
+                    fontWeight: light,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [

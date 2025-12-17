@@ -107,7 +107,7 @@ class _ProductPageState extends State<ProductPage> {
                   alignment: Alignment.centerLeft,
                   child: GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: Icon(Icons.close, color: primaryTextColor),
+                    child: Image.asset('assets/Union.png', width: 24),
                   ),
                 ),
                 Image.asset('assets/icon_success.png', width: 100),
@@ -188,8 +188,8 @@ class _ProductPageState extends State<ProductPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.chevron_left, size: 32)),
+                      onTap: () => Navigator.pop(context),
+                      child: Image.asset('assets/Union.png', width: 32)),
                     const Icon(Icons.shopping_bag,
                         color: Colors.black, size: 28),
                   ],

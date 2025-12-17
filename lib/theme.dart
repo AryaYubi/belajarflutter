@@ -11,6 +11,7 @@ Color priceColor = Color(0xff2C96F1);
 Color bg1Color = Color(0xff1F1D2B);
 Color bg2Color = Color(0xff2B2937);
 Color bg3Color = Color(0xff242231);
+Color bg4Color = const Color(0xff1f1d2b);
 Color primaryTextColor = Color(0xffF1F0F2);
 Color secondaryTextColor = Color(0xff999999);
 Color subtitleTextColor = Color(0xff504F5E);

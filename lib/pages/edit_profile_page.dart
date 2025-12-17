@@ -156,8 +156,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return Scaffold(
         backgroundColor: bg3Color,
         appBar: AppBar(
-          leading: IconButton(
-              icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+            leading: IconButton(
+              icon: Image.asset('assets/Union.png', width: 24), onPressed: () => Navigator.pop(context)),
           backgroundColor: bg1Color,
           elevation: 0,
           centerTitle: true,
@@ -172,9 +172,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: bg3Color,
       appBar: AppBar(
-        leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context)),
+      leading: IconButton(
+        icon: Image.asset('assets/Union.png', width: 24),
+        onPressed: () => Navigator.pop(context)),
         backgroundColor: bg1Color,
         elevation: 0,
         centerTitle: true,
