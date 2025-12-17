@@ -11,7 +11,9 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+
 class _HomePageState extends State<HomePage> {
+
   final supabase = Supabase.instance.client;
 
   // ============================
@@ -131,7 +133,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         // REFRESH BUTTON
                         IconButton(
-                          icon: const Icon(Icons.refresh),
+                          icon: const Icon(Icons.refresh, color: Color(0xff504F5E)),
                           onPressed: _refreshAll,
                         ),
                       ],

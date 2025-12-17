@@ -1,9 +1,9 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+// lib/pages/cart_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
 import 'package:shamo/widgets/cart_card.dart';
-
-// [IMPORTS TIDAK DIGUNAKAN DIHAPUS]
+import 'package:shamo/services/cart_service.dart'; // Wajib diimpor
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -13,9 +13,6 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  // ASUMSI: Supabase sudah diinisialisasi di main.dart
-  final supabase = Supabase.instance.client;
-
   bool isLoading = true;
   List<Map<String, dynamic>> cartItems = [];
   double subtotal = 0;
@@ -28,32 +25,34 @@ class _CartPageState extends State<CartPage> {
 
   // Fetch data cart dari Supabase
   Future<void> fetchCart() async {
-    // PENTING: Tambahkan pengecekan mounted sebelum setState
-    final userId = supabase.auth.currentUser!.id;
+    try {
+      final res = await cartService.getCartItems(); // Menggunakan Service
 
-    final res = await supabase
-        .from('carts')
-        .select('id, quantity, products(*)')
-        .eq('user_id', userId);
+      // Sort cart items by id to keep stable order
+      res.sort((a, b) => (a['id'] as int).compareTo(b['id'] as int));
 
-    List<Map<String, dynamic>> items =
-        List<Map<String, dynamic>>.from(res);
+      // Hitung subtotal
+      double total = 0;
+      for (var item in res) {
+        final price = (item['products']['price'] ?? 0).toDouble();
+        final qty = item['qty'] as int? ?? 1; // Menggunakan kolom 'qty'
+        total += price * qty;
+      }
 
-    // Hitung subtotal
-    double total = 0;
-    for (var item in items) {
-      final price = (item['products']['price'] ?? 0).toDouble();
-      final qty = item['quantity'] ?? 1;
-      total += price * qty;
+      if (!mounted) return;
+
+      setState(() {
+        cartItems = res;
+        subtotal = total;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+      print('Error loading cart: $e');
     }
-
-    if (!mounted) return; // Pengecekan stabilitas async
-
-    setState(() {
-      cartItems = items;
-      subtotal = total;
-      isLoading = false;
-    });
   }
 
   @override
@@ -72,72 +71,75 @@ class _CartPageState extends State<CartPage> {
 
       // BODY
       body: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : cartItems.isEmpty
-                  ? Center(
-                      child: Text("Your cart is empty",
-                          style: primaryTextStyle.copyWith(fontSize: 16)),
-                    )
-                  : ListView(
-                      padding: EdgeInsets.symmetric(horizontal: defaultMargin),
-                      children: cartItems
-                          .map((item) => CartCard(
-                                cartId: item['id'],
-                                product: item['products'],
-                                quantity: item['quantity'],
-                                onUpdate: fetchCart,
-                              ))
-                          .toList(),
-                    ),
+          ? const Center(child: CircularProgressIndicator())
+          : cartItems.isEmpty
+              ? Center(
+                  child: Text("Your cart is empty",
+                      style: primaryTextStyle.copyWith(fontSize: 16)),
+                )
+              : ListView(
+                  padding: EdgeInsets.symmetric(horizontal: defaultMargin),
+                  children: cartItems
+                      .map((item) => CartCard(
+                            cartId: item['id'],
+                            product: item['products'],
+                            quantity: item['qty'],
+                            onUpdate: fetchCart, // Callback untuk refresh
+                          ))
+                      .toList(),
+                ),
 
       // FOOTER BAR
-      bottomNavigationBar: SizedBox(
-        height: 180,
-        child: Column(
-          children: [
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: defaultMargin),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      bottomNavigationBar: cartItems.isEmpty
+          ? const SizedBox()
+          : SizedBox(
+              height: 180,
+              child: Column(
                 children: [
-                  Text('Subtotal', style: primaryTextStyle),
-                  Text(
-                    '\$${subtotal.toStringAsFixed(2)}',
-                    style:
-                        priceTextStyle.copyWith(fontSize: 16, fontWeight: semiBold),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: defaultMargin),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Subtotal', style: primaryTextStyle),
+                        Text(
+                          '\$${subtotal.toStringAsFixed(2)}',
+                          style: priceTextStyle.copyWith(
+                              fontSize: 16, fontWeight: semiBold),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  Divider(thickness: 0.3, color: subtitleTextColor),
+                  const SizedBox(height: 30),
+                  Container(
+                    height: 50,
+                    margin: EdgeInsets.symmetric(horizontal: defaultMargin),
+                    child: TextButton(
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/checkout'),
+                      style: TextButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Continue to Checkout',
+                              style: primaryTextStyle.copyWith(
+                                  fontSize: 16, fontWeight: semiBold)),
+                          Icon(Icons.arrow_forward, color: primaryTextColor),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 30),
-            Divider(thickness: 0.3, color: subtitleTextColor),
-            const SizedBox(height: 30),
-            Container(
-              height: 50,
-              margin: EdgeInsets.symmetric(horizontal: defaultMargin),
-              child: TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/checkout'),
-                style: TextButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Continue to Checkout',
-                        style: primaryTextStyle.copyWith(
-                            fontSize: 16, fontWeight: semiBold)),
-                    Icon(Icons.arrow_forward, color: primaryTextColor),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

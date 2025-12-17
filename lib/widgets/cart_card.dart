@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-// import 'package:shamo/services/supabase_service.dart'; // [DIHAPUS]
+import 'package:shamo/services/cart_service.dart';
 
 class CartCard extends StatelessWidget {
   final int cartId;
-  final Map<String, dynamic> product;
+  final Map<String, dynamic> product; // Data produk dari JOIN
   final int quantity;
-  final VoidCallback onUpdate;
+  final VoidCallback onUpdate; // Untuk me-refresh keranjang
 
   const CartCard({
     super.key,
@@ -19,33 +18,9 @@ class CartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final supabase = Supabase.instance.client;
-
-    Future<void> increaseQty() async {
-      await supabase
-          .from('carts')
-          .update({'quantity': quantity + 1})
-          .eq('id', cartId);
-      onUpdate();
-    }
-
-    Future<void> decreaseQty() async {
-      if (quantity == 1) {
-        // delete item
-        await supabase.from('carts').delete().eq('id', cartId);
-      } else {
-        await supabase
-            .from('carts')
-            .update({'quantity': quantity - 1})
-            .eq('id', cartId);
-      }
-      onUpdate();
-    }
-
-    Future<void> deleteItem() async {
-      await supabase.from('carts').delete().eq('id', cartId);
-      onUpdate();
-    }
+    final String imageUrl = product['image_url'] ?? '';
+    final String name = product['name'] ?? 'Unknown Product';
+    final double price = (product['price'] ?? 0).toDouble();
 
     return Container(
       margin: EdgeInsets.only(top: defaultMargin),
@@ -56,92 +31,78 @@ class CartCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // --------------------------------------------------
-          // PRODUCT ROW
-          // --------------------------------------------------
           Row(
             children: [
-              // IMAGE
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(
-                    image: product['image_url'] != null
-                        ? NetworkImage(product['image_url'])
-                        : const AssetImage('assets/image_shoes.png') as ImageProvider,
-                    fit: BoxFit.cover,
-                  ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  imageUrl,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (ctx, error, stackTrace) {
+                    print('ERROR LOADING CART IMAGE: $imageUrl');
+                    return Image.asset(
+                      'assets/image_shoes.png',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    );
+                  },
                 ),
               ),
-
               const SizedBox(width: 12),
-
-              // NAME & PRICE
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      product['name'] ?? '',
-                      style: primaryTextStyle.copyWith(fontWeight: semiBold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '\$${product['price'].toString()}',
-                      style: priceTextStyle,
-                    ),
+                    Text(name, style: primaryTextStyle.copyWith(fontWeight: semiBold)),
+                    Text('\$${price.toStringAsFixed(2)}', style: priceTextStyle),
                   ],
                 ),
               ),
-
-              // QTY BUTTONS
               Column(
                 children: [
+                  // ADD button
                   GestureDetector(
-                    onTap: increaseQty,
-                    child: Image.asset('assets/button_add.png', width: 16),
+                    onTap: () async {
+                      await cartService.updateQuantity(cartId, quantity + 1);
+                      onUpdate();
+                    },
+                    child: Icon(Icons.add_circle, color: primaryColor),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    quantity.toString(),
-                    style:
-                        primaryTextStyle.copyWith(fontWeight: medium),
-                  ),
+                  Text(quantity.toString(), style: primaryTextStyle.copyWith(fontWeight: medium)),
                   const SizedBox(height: 2),
+                  // REDUCE button
                   GestureDetector(
-                    onTap: decreaseQty,
-                    child: Image.asset('assets/button_min.png', width: 16),
+                    onTap: () async {
+                      if (quantity > 1) {
+                        await cartService.updateQuantity(cartId, quantity - 1);
+                      } else {
+                        await cartService.removeItem(cartId);
+                      }
+                      onUpdate();
+                    },
+                    child: Icon(Icons.remove_circle, color: secondaryColor),
                   ),
                 ],
               ),
             ],
           ),
-
-          const SizedBox(height: 12),
-
-          // --------------------------------------------------
-          // REMOVE
-          // --------------------------------------------------
-          GestureDetector(
-            onTap: deleteItem,
-            child: Row(
-              children: [
-                const Icon(Icons.delete, color: Color(0xffED6363), size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  'Remove',
-                  style: primaryTextStyle.copyWith(
-                    fontSize: 12,
-                    fontWeight: light,
-                    color: const Color(0xffED6363),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // REMOVE button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: () async {
+                  await cartService.removeItem(cartId);
+                  onUpdate();
+                },
+                child: Text('Remove', style: alertTextStyle.copyWith(fontSize: 12)),
+              ),
+            ],
+          )
         ],
       ),
     );

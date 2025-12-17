@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
+import 'package:shamo/services/profile_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'orders_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -10,9 +12,12 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final supabase = Supabase.instance.client;
   Map<String, dynamic>? profile;
   bool loading = true;
+
+  final supabase = Supabase.instance.client;
+  final String? currentUserEmail =
+      Supabase.instance.client.auth.currentUser?.email;
 
   @override
   void initState() {
@@ -22,19 +27,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _refreshProfile() async {
     setState(() => loading = true);
-
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
-
     try {
-      final res = await supabase
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .single();
-
+      final res = await profileService.getProfile();
       if (!mounted) return;
-
       setState(() {
         profile = res;
         loading = false;
@@ -42,8 +37,57 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => loading = false);
-      debugPrint('Error fetching profile: $e');
+      debugPrint("Error fetching profile: $e");
     }
+  }
+
+  Future<void> handleLogout() async {
+    await supabase.auth.signOut();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/sign-in', (_) => false);
+  }
+
+  void navigateToEditProfile() async {
+    final result = await Navigator.pushNamed(
+      context,
+      '/edit-profile',
+      arguments: {
+        'name': profile?['name'] ?? '',
+        'username': profile?['username'] ?? '',
+        'email': currentUserEmail ?? '',
+      },
+    );
+
+    if (result == true) {
+      _refreshProfile();
+    }
+  }
+
+  // ======================================================
+  // MENU ITEM (FIXED: HOVER + CURSOR WEB)
+  // ======================================================
+  Widget menuItem(String text, {VoidCallback? onTap}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          margin: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                text,
+                style: secondaryTextStyle.copyWith(fontSize: 13),
+              ),
+              Icon(Icons.chevron_right, color: primaryTextColor),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -51,22 +95,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final name = profile?['name'] ?? 'Guest';
     final username = profile?['username'] ?? 'no_username';
     final avatarUrl = profile?['avatar_url'];
-
-    Widget menuItem(String text, {VoidCallback? onTap}) {
-      return GestureDetector(
-        onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.only(top: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(text, style: secondaryTextStyle.copyWith(fontSize: 13)),
-              Icon(Icons.chevron_right, color: primaryTextColor),
-            ],
-          ),
-        ),
-      );
-    }
 
     return Column(
       children: [
@@ -81,7 +109,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   ClipOval(
                     child: avatarUrl == null
-                        ? Image.asset('assets/image_profile.png', width: 64)
+                        ? Image.asset(
+                            'assets/image_profile.png',
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.cover,
+                          )
                         : Image.network(
                             avatarUrl,
                             width: 64,
@@ -97,39 +130,36 @@ class _ProfilePageState extends State<ProfilePage> {
                         loading
                             ? const LinearProgressIndicator()
                             : Text(
-                                'Hallo, $name',
+                                "Hallo, $name",
                                 style: primaryTextStyle.copyWith(
                                   fontSize: 24,
                                   fontWeight: semiBold,
                                 ),
                               ),
                         Text(
-                          '@$username',
+                          "@$username",
                           style: subtitleTextStyle.copyWith(fontSize: 16),
                         ),
                       ],
                     ),
                   ),
-                  // REFRESH BUTTON
                   IconButton(
                     onPressed: _refreshProfile,
-                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    icon: const Icon(Icons.refresh, color: Color(0xff504F5E)),
                   ),
-                  GestureDetector(
-                    onTap: () async {
-                      await supabase.auth.signOut();
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, '/sign-in', (route) => false);
-                    },
-                    child: Image.asset('assets/button_exit.png', width: 20),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: handleLogout,
+                      child:
+                          Image.asset('assets/button_exit.png', width: 20),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
         ),
-
-        // Body
         Expanded(
           child: Container(
             width: double.infinity,
@@ -139,18 +169,25 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                Text('Account',
-                    style: primaryTextStyle.copyWith(
-                        fontSize: 16, fontWeight: semiBold)),
-                menuItem('Edit Profile',
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/edit-profile')),
-                menuItem('Your Orders'),
+                Text(
+                  'Account',
+                  style: primaryTextStyle.copyWith(
+                      fontSize: 16, fontWeight: semiBold),
+                ),
+                menuItem('Edit Profile', onTap: navigateToEditProfile),
+                menuItem('Your Orders', onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OrdersPage()),
+                  );
+                }),
                 menuItem('Help'),
                 const SizedBox(height: 30),
-                Text('General',
-                    style: primaryTextStyle.copyWith(
-                        fontSize: 16, fontWeight: semiBold)),
+                Text(
+                  'General',
+                  style: primaryTextStyle.copyWith(
+                      fontSize: 16, fontWeight: semiBold),
+                ),
                 menuItem('Privacy & Policy'),
                 menuItem('Term of Service'),
                 menuItem('Rate App'),
