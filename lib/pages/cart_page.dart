@@ -62,6 +62,15 @@ class _CartPageState extends State<CartPage> {
       appBar: AppBar(
         backgroundColor: bg1Color,
         centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Image.asset(
+            'assets/button_back.png', 
+            width: 8,
+          ),
+        ),
         title: Text(
           'Your Cart',
           style: primaryTextStyle.copyWith(fontSize: 18, fontWeight: medium),
@@ -74,8 +83,50 @@ class _CartPageState extends State<CartPage> {
           ? const Center(child: CircularProgressIndicator())
           : cartItems.isEmpty
               ? Center(
-                  child: Text("Your cart is empty",
-                      style: primaryTextStyle.copyWith(fontSize: 16)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/icon_empty_cart.png',
+                        width: 80,
+                        height: 80,
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Opss! Your Cart is Empty',
+                        style: primaryTextStyle.copyWith(
+                          fontSize: 18,
+                          fontWeight: semiBold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Let's find your favorite shoes",
+                        style: secondaryTextStyle.copyWith(fontSize: 14),
+                      ),
+                      const SizedBox(height: 30),
+                      SizedBox(
+                        height: 50,
+                        child: TextButton(
+                          onPressed: () => Navigator.pushNamed(context, '/home'),
+                          style: TextButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Explore Store',
+                            style: primaryTextStyle.copyWith(
+                              fontSize: 16,
+                              fontWeight: semiBold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               : ListView(
                   padding: EdgeInsets.symmetric(horizontal: defaultMargin),

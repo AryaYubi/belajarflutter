@@ -54,6 +54,17 @@ class _OrdersPageState extends State<OrdersPage> {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Color(0xff6C5ECF)),
+        leading: IconButton(
+          onPressed: () => Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home',
+            (route) => false,
+          ),
+          icon: Image.asset(
+            'assets/button_back.png',
+            width: 8,
+          ),
+        ),
         title: const Text('Your Orders', style: TextStyle(fontWeight: FontWeight.w600)),
       ),
       body: isLoading

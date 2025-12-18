@@ -176,10 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 menuItem('Edit Profile', onTap: navigateToEditProfile),
                 menuItem('Your Orders', onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OrdersPage()),
-                  );
+                  Navigator.pushNamed(context, '/orders');
                 }),
                 menuItem('Help'),
                 const SizedBox(height: 30),

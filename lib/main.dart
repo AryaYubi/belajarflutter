@@ -6,6 +6,7 @@ import 'pages/sign_in_page.dart';
 import 'pages/sign_up_page.dart';
 import 'pages/home/main_page.dart';
 import 'pages/home/chat_page.dart';
+import 'pages/home/orders_page.dart';
 import 'pages/edit_profile_page.dart';
 import 'pages/checkout_page.dart';
 import 'pages/checkout_success_page.dart';
@@ -40,12 +41,12 @@ class MyApp extends StatelessWidget {
         '/sign-up': (context) => const SignUpPage(),
         '/home': (context) => const MainPage(),
         '/chat': (context) => const ChatPage(),
+        '/orders': (context) => const OrdersPage(),
         '/edit-profile': (context) => const EditProfilePage(),
         '/product': (context) => const ProductPage(),
         '/cart': (context) => const CartPage(),
         '/checkout': (context) => const CheckoutPage(),
-        '/checkout-success': (context) =>
-            const CheckoutSuccessPage(),
+        '/checkout-success': (context) => const CheckoutSuccessPage(),
       },
     );
   }

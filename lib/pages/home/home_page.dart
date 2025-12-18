@@ -15,6 +15,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
 
   final supabase = Supabase.instance.client;
+  late ScrollController _popularProductsScrollController;
 
   // ============================
   // PROFILE STREAM
@@ -52,20 +53,105 @@ class _HomePageState extends State<HomePage> {
   String selectedCategory = 'All Shoes';
   bool loadingProduct = true;
   List<Map<String, dynamic>> products = [];
+  List<Map<String, dynamic>> topSellingProducts = [];
 
   Future<void> fetchProducts() async {
     try {
       final res = await supabase.from('products').select();
+      
       if (!mounted) return;
 
       setState(() {
         products = List<Map<String, dynamic>>.from(res);
+      });
+      
+      // Fetch top selling products
+      await _fetchTopSellingProducts();
+      
+      if (!mounted) return;
+      setState(() {
         loadingProduct = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => loadingProduct = false);
       debugPrint('Error loading products: $e');
+    }
+  }
+
+  Future<void> _fetchTopSellingProducts() async {
+    try {
+      // Fetch all transaction items with product_id
+      final transactionItems = await supabase
+          .from('transaction_items')
+          .select('product_id, quantity');
+
+      if (transactionItems.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          topSellingProducts = products.take(5).toList();
+        });
+        return;
+      }
+
+      // Group by product_id and sum quantities
+      final Map<int, int> salesMap = {};
+
+      for (var item in transactionItems) {
+        final productId = item['product_id'] as int;
+        final quantity = item['quantity'] as int;
+        salesMap[productId] = (salesMap[productId] ?? 0) + quantity;
+      }
+
+      // Sort by sales (descending) and get top 5 product IDs
+      final topProductIds = salesMap.entries
+          .toList()
+          ..sort((a, b) => b.value.compareTo(a.value))
+          ;
+      
+      final topIds = topProductIds
+          .take(5)
+          .map((e) => e.key)
+          .toList();
+
+      if (topIds.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          topSellingProducts = products.take(5).toList();
+        });
+        return;
+      }
+
+      // Get full product details for top selling products using a single query
+      final topProducts = await supabase
+          .from('products')
+          .select()
+          .inFilter('id', topIds);
+
+      if (!mounted) return;
+
+      // Sort the results to match the sales order
+      final sortedTopProducts = <Map<String, dynamic>>[];
+      for (var id in topIds) {
+        final product = topProducts.firstWhere(
+          (p) => p['id'] == id,
+          orElse: () => {},
+        );
+        if (product.isNotEmpty) {
+          sortedTopProducts.add(Map<String, dynamic>.from(product));
+        }
+      }
+
+      setState(() {
+        topSellingProducts = sortedTopProducts;
+      });
+    } catch (e) {
+      debugPrint('Error fetching top selling products: $e');
+      // Fallback to first 5 products
+      if (!mounted) return;
+      setState(() {
+        topSellingProducts = products.take(5).toList();
+      });
     }
   }
 
@@ -86,7 +172,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _popularProductsScrollController = ScrollController();
     _refreshAll();
+  }
+
+  @override
+  void dispose() {
+    _popularProductsScrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -151,8 +244,7 @@ class _HomePageState extends State<HomePage> {
                           'Running',
                           'Training',
                           'Basketball',
-                          'Hiking',
-                          'Football'
+                          'Hiking'
                         ].map((e) {
                           bool selected = selectedCategory == e;
                           return GestureDetector(
@@ -207,10 +299,11 @@ class _HomePageState extends State<HomePage> {
                           ),
                           const SizedBox(height: 14),
                           SingleChildScrollView(
+                            reverse: true,
+                            controller: _popularProductsScrollController,
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children:
-                                  products.take(3).map((p) => ProductCard(p)).toList(),
+                              children: topSellingProducts.map((p) => ProductCard(p)).toList(),
                             ),
                           ),
                           const SizedBox(height: 30),

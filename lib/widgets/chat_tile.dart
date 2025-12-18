@@ -4,15 +4,15 @@ import 'package:shamo/pages/detail_chat_page.dart';
 
 class ChatTile extends StatelessWidget {
   final String chatId;
-  final String sellerName;
   final String lastMessage;
+  final String sellerName;
   final String timeLabel;
 
   const ChatTile({
     super.key,
     required this.chatId,
-    required this.sellerName,
     required this.lastMessage,
+    required this.sellerName,
     required this.timeLabel,
   });
 
@@ -23,15 +23,20 @@ class ChatTile extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DetailChatPage(chatId: chatId),
+            builder: (_) => DetailChatPage(
+              chatId: chatId,
+            ),
           ),
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(top: 20),
+        margin: const EdgeInsets.only(bottom: 20),
         child: Row(
           children: [
-            Image.asset('assets/image_shop_logo.png', width: 54),
+            Image.asset(
+              'assets/image_shop_logo.png',
+              width: 54,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -39,11 +44,14 @@ class ChatTile extends StatelessWidget {
                 children: [
                   Text(
                     sellerName,
-                    style: primaryTextStyle.copyWith(fontSize: 15),
+                    style: primaryTextStyle.copyWith(
+                      fontWeight: semiBold,
+                    ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     lastMessage,
-                    style: secondaryTextStyle.copyWith(fontWeight: light),
+                    style: secondaryTextStyle,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

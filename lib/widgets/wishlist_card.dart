@@ -1,3 +1,4 @@
+// lib/widgets/wishlist_card.dart
 import 'package:flutter/material.dart';
 import 'package:shamo/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,16 +28,23 @@ class _WishlistCardState extends State<WishlistCard> {
 
       setState(() => isWishlist = false);
 
-      // Optional: show a snackbar
+      // Show red notification
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Removed from wishlist')),
+          SnackBar(
+            content: const Text('Removed from wishlist'),
+            backgroundColor: alertColor,
+            duration: const Duration(seconds: 2),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove: $e')),
+          SnackBar(
+            content: Text('Failed to remove: $e'),
+            backgroundColor: alertColor,
+          ),
         );
       }
     }

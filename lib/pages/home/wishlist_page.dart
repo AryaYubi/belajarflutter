@@ -29,8 +29,6 @@ class _WishlistPageState extends State<WishlistPage> {
         .select('id, created_at, products(*)')
         .eq('user_id', user.id);
 
-    if (response == null) return [];
-
     final List<dynamic> data = response;
 
     return data.map<Map<String, dynamic>>((row) {
@@ -40,7 +38,7 @@ class _WishlistPageState extends State<WishlistPage> {
         'product_id': product['id'],
         'name': product['name'],
         'price': product['price'],
-        'img': product['img'],
+        'img': product['image_url'],
         'created_at': row['created_at'],
       };
     }).toList();
