@@ -253,7 +253,7 @@ class _ProductPageState extends State<ProductPage> {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Image.asset('assets/back_icon.png', width: 32)),
+                      child: Image.asset('assets/Back_Icon.png', width: 32)),
                     const Icon(Icons.shopping_bag,
                         color: Colors.black, size: 28),
                   ],
